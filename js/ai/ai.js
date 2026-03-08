@@ -502,6 +502,23 @@ function copyRawReply() {
     navigator.clipboard.writeText(content).then(() => showToast('📋 已复制AI原始回复'));
 }
 
+function setGenerateUiState(isGenerating) {
+    const btn = document.getElementById('btnGenerate');
+    const stopBtn = document.getElementById('btnStopGenerate');
+    if (btn) btn.disabled = !!isGenerating;
+    if (stopBtn) stopBtn.style.display = isGenerating ? '' : 'none';
+}
+
+function stopGenerateAI() {
+    if (!AppState.currentAbortController) {
+        showToast('当前没有正在进行的生成任务');
+        return;
+    }
+    AppState.currentAbortController.abort();
+    setGenerateUiState(false);
+    setAiStatus('⚠️ 已手动停止生成', '');
+}
+
 async function generateWithAI() {
     const baseUrl = document.getElementById('aiBaseUrl').value.trim().replace(/\/+$/, '');
     const apiKey = document.getElementById('aiApiKey').value.trim();
@@ -516,8 +533,7 @@ async function generateWithAI() {
     if (!isOpeningMode() && modules.length === 0) { showToast('请至少勾选一个生成模块'); return; }
     if (isOpeningMode() && !openingScene) { showToast('请填写开场白需求描述'); return; }
 
-    const btn = document.getElementById('btnGenerate');
-    btn.disabled = true;
+    setGenerateUiState(true);
     setAiStatus('⏳ 生成中，请稍候…', '');
     document.getElementById('aiResultSection').style.display = 'none';
 
@@ -533,7 +549,7 @@ async function generateWithAI() {
         console.error('[AI Generate Error]', err);
         setAiStatus(`❌ 出错：${err.message}`, 'error');
     } finally {
-        btn.disabled = false;
+        setGenerateUiState(false);
         AppState.currentAbortController = null;
     }
 }
@@ -649,7 +665,8 @@ function processAiResult(raw, modules) {
 }
 
 function setAiStatus(text, cls) {
-    const el = document.getElementById('aiStatusText');
+    const el = document.getElementById('aiGenerateStatus') || document.getElementById('aiStatusText');
+    if (!el) return;
     el.textContent = text;
     el.className = 'ai-status-text' + (cls ? ' ' + cls : '');
 }

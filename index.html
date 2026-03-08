@@ -1027,6 +1027,12 @@
                     </div>
                     <div id="aiPromptPreviewContent" style="display:none;background:#f8f9fa;border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:14px;font-family:Consolas,monospace;font-size:0.8rem;line-height:1.6;max-height:280px;overflow-y:auto;white-space:pre-wrap;color:#2d3436;"></div>
                 </div>
+
+                <div class="ai-generate-area">
+                    <button type="button" class="btn-ai-generate" id="btnGenerate" onclick="generateWithAI()">✨ AI 开始生成</button>
+                    <button type="button" class="btn-ai-stop" id="btnStopGenerate" onclick="stopGenerateAI()" style="display:none;">⏹ 停止生成</button>
+                    <span class="ai-status-text" id="aiGenerateStatus">配置完成后即可开始生成</span>
+                </div>
             </div>
 
             <!-- 需求4: AI原始回复内容区域 -->
