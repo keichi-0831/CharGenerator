@@ -22,6 +22,12 @@ function getCloudMetaConfigSnapshot() {
     });
     moduleGuides.opening_scene = getVal('guide_opening_scene', '');
 
+    const pronouns = {
+        sendPersonalPronounsToAi: getChecked('sendPersonalPronounsToAi', false),
+        charPronounMode: document.querySelector('input[name="charPronounMode"]:checked')?.value || 'third',
+        userPronounMode: document.querySelector('input[name="userPronounMode"]:checked')?.value || 'second'
+    };
+
     return {
         version: 1,
         currentCharId: getCurrentId(),
@@ -52,7 +58,9 @@ function getCloudMetaConfigSnapshot() {
             openingWordCount: getVal('aiOpeningWordCount', '800-1000字'),
             sendTropeToAi: getChecked('sendTropeToAi', true),
             includeExistingContentToAi: getChecked('includeExistingContentToAi', true),
+            useNamerPoolForAi: getChecked('useNamerPoolForAi', false),
             enableStream: getChecked('enableStream', true),
+            pronouns,
             moduleChecks,
             moduleGuides,
         }
@@ -92,7 +100,17 @@ function applyCloudMetaConfig(cfg) {
             setVal('aiOpeningWordCount', cfg.ai.openingWordCount);
             setChecked('sendTropeToAi', cfg.ai.sendTropeToAi);
             setChecked('includeExistingContentToAi', cfg.ai.includeExistingContentToAi);
+            setChecked('useNamerPoolForAi', cfg.ai.useNamerPoolForAi);
             setChecked('enableStream', cfg.ai.enableStream);
+            if (cfg.ai.pronouns && typeof cfg.ai.pronouns === 'object') {
+                setChecked('sendPersonalPronounsToAi', cfg.ai.pronouns.sendPersonalPronounsToAi);
+                const charPronoun = cfg.ai.pronouns.charPronounMode || 'third';
+                const userPronoun = cfg.ai.pronouns.userPronounMode || 'second';
+                const charRadio = document.querySelector(`input[name="charPronounMode"][value="${charPronoun}"]`);
+                const userRadio = document.querySelector(`input[name="userPronounMode"][value="${userPronoun}"]`);
+                if (charRadio) charRadio.checked = true;
+                if (userRadio) userRadio.checked = true;
+            }
             if (cfg.ai.moduleChecks && typeof cfg.ai.moduleChecks === 'object') {
                 document.querySelectorAll('input[name="aiModule"]').forEach(el => {
                     if (cfg.ai.moduleChecks[el.value] !== undefined) el.checked = !!cfg.ai.moduleChecks[el.value];

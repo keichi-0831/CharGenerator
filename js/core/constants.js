@@ -95,18 +95,19 @@ const AI_SUBTAB_PERSONA_CARD = 'persona-card';
 const AI_SUBTAB_WORLDVIEW = 'worldview';
 const AI_SUBTAB_OPENING = 'opening';
 
-const AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT = `请严格按照以下JSON格式回复，不要包含任何其他文字或markdown标记。只需填写被请求的模块，其余留空。列表字段提供2-5个条目，描述精炼有层次感。若表单已有部分内容，你需要进行参考并补全要求的内容。
+const AI_PRONOUN_LABELS = {
+    first: '第一人称',
+    second: '第二人称',
+    third: '第三人称'
+};
 
-{
-  "basic": { "char_name":"", "chinese_name":"", "nickname":"", "age":"", "birthday_date":"", "birthday_zodiac":"", "gender":"", "height":"", "identity":[], "archetype":[], "social":[] },
-  "background": { "childhood_range":"0-12岁", "childhood":[], "teenage_range":"13-18岁", "teenage":[], "youth_range":"19-24岁", "youth":[], "current_range":"", "current":[] },
-  "appearance": { "hair":"", "eyes":"", "skin":"", "face_style":"", "build":[], "attire_formal":"", "attire_business":"", "attire_casual":"", "attire_home":"" },
-  "personality": { "core_traits":[], "romantic_traits":[], "weakness":[], "likes":[], "dislikes":[], "goals":[] },
-  "user_relation": { "past_events":[], "impression":[], "notes":[] },
-  "behavior": { "lifestyle":[], "work_behaviors":[], "emotional_angry":"", "emotional_happy":"", "emotional_sad":"", "boundaries":[], "work_skills":[], "life_skills":[], "hobby_skills":[] },
-  "speech": { "speech_with_user":"", "speech_reasoning":"", "speech_accent":"", "speech_online":"" },
-  "extra": { "additional_notes":"", "catchphrases":[], "mannerisms":[], "trauma":[], "values":[], "conflicts":[], "secrets":[], "relationships":[], "defining_moments":[] }
-}`;
+const AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT = `请根据用户提供的需求与各模块引导词，补全对应的人设卡内容。
+要求：
+1. 只生成本次请求的模块；
+2. 若表单里已有内容，请优先参考并保持设定一致；
+3. 列表字段尽量提供 2-5 个条目，描述精炼但有层次；
+4. 设定之间要前后呼应，避免互相冲突；
+5. 风格保持细腻、自然、适合角色卡直接使用。`;
 
 const AI_OPENING_INSTRUCTIONS_DEFAULT = `请直接输出一段可用于故事开篇的正文，不要使用JSON、标题、分点、注释或markdown格式。
 需要满足以下要求：

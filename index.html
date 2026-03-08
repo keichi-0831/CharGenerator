@@ -954,6 +954,34 @@
                             </div>
 
                             <div class="ai-guide-module">
+                                <label class="ai-guide-header" style="cursor:default;">
+                                    <span class="guide-tag">PersonalPronouns</span>
+                                    <span class="guide-title">开场白人称偏好（可选发送给 AI）</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--text-main);margin-bottom:12px;">
+                                        <input type="checkbox" id="sendPersonalPronounsToAi" onchange="scheduleCloudConfigSync()" style="accent-color: var(--primary-color);">
+                                        将 <code>&lt;PersonalPronouns&gt;</code> 标签一并发送给 AI
+                                    </label>
+                                    <div class="ai-guide-hint">可分别指定 character 与 user 在开场白里适合使用的第 1 / 2 / 3 人称。若选择第三人称，会提示 AI 使用 {{char}} / {{user}} 作为占位符。</div>
+                                    <div class="pronoun-grid">
+                                        <div class="pronoun-role-card">
+                                            <div class="pronoun-role-title">character</div>
+                                            <label><input type="radio" name="charPronounMode" value="first"> 第一人称</label>
+                                            <label><input type="radio" name="charPronounMode" value="second"> 第二人称</label>
+                                            <label><input type="radio" name="charPronounMode" value="third" checked> 第三人称（{{char}}）</label>
+                                        </div>
+                                        <div class="pronoun-role-card">
+                                            <div class="pronoun-role-title">user</div>
+                                            <label><input type="radio" name="userPronounMode" value="first"> 第一人称</label>
+                                            <label><input type="radio" name="userPronounMode" value="second" checked> 第二人称</label>
+                                            <label><input type="radio" name="userPronounMode" value="third"> 第三人称（{{user}}）</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
                                 <label class="ai-guide-header" for="aiOpeningWordCount">
                                     <span class="guide-tag">WordCount</span>
                                     <span class="guide-title">字数范围</span>
@@ -967,29 +995,15 @@
                     </div>
                 </div>
 
-                <!-- 需求2: JSON预览默认关闭 -->
-                <div class="ai-block" id="modulePreviewBlock">
-                    <div class="json-preview-toggle" id="jsonPreviewToggle" onclick="toggleJsonPreview()">
-                        <span class="arrow">▶</span> <span id="aiPreviewTitle">📋 本次将发送的 JSON 格式预览</span>
-                        <span style="font-size:0.75rem;color:var(--text-sub);font-weight:400;">（点击展开/收起）</span>
-                    </div>
-                    <div id="moduleJsonPreview" style="display:none;background:#f8f9fa;border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:14px;font-family:Consolas,monospace;font-size:0.8rem;line-height:1.6;max-height:220px;overflow-y:auto;white-space:pre-wrap;color:#2d3436;"></div>
-                </div>
-
                 <div class="ai-block">
-                    <div class="ai-block-label"><span class="ai-tag-badge">instructions</span> 填卡说明 &amp; 回复格式（可自定义）</div>
-                    <textarea id="aiInstructions" rows="10">请严格按照以下JSON格式回复，不要包含任何其他文字或markdown标记。只需填写被请求的模块，其余留空。列表字段提供2-5个条目，描述精炼有层次感。若表单已有部分内容，你需要进行参考并补全要求的内容。
-
-{
-  "basic": { "char_name":"", "chinese_name":"", "nickname":"", "age":"", "birthday_date":"", "birthday_zodiac":"", "gender":"", "height":"", "identity":[], "archetype":[], "social":[] },
-  "background": { "childhood_range":"0-12岁", "childhood":[], "teenage_range":"13-18岁", "teenage":[], "youth_range":"19-24岁", "youth":[], "current_range":"", "current":[] },
-  "appearance": { "hair":"", "eyes":"", "skin":"", "face_style":"", "build":[], "attire_formal":"", "attire_business":"", "attire_casual":"", "attire_home":"" },
-  "personality": { "core_traits":[], "romantic_traits":[], "weakness":[], "likes":[], "dislikes":[], "goals":[] },
-  "user_relation": { "past_events":[], "impression":[], "notes":[] },
-  "behavior": { "lifestyle":[], "work_behaviors":[], "emotional_angry":"", "emotional_happy":"", "emotional_sad":"", "boundaries":[], "work_skills":[], "life_skills":[], "hobby_skills":[] },
-  "speech": { "speech_with_user":"", "speech_reasoning":"", "speech_accent":"", "speech_online":"" },
-  "extra": { "additional_notes":"", "catchphrases":[], "mannerisms":[], "trauma":[], "values":[], "conflicts":[], "secrets":[], "relationships":[], "defining_moments":[] }
-}</textarea>
+                    <div class="ai-block-label"><span class="ai-tag-badge">instructions</span> 填卡说明（可自定义）</div>
+                    <textarea id="aiInstructions" rows="8">请根据用户提供的需求与各模块引导词，补全对应的人设卡内容。
+要求：
+1. 只生成本次请求的模块；
+2. 若表单里已有内容，请优先参考并保持设定一致；
+3. 列表字段尽量提供 2-5 个条目，描述精炼但有层次；
+4. 设定之间要前后呼应，避免互相冲突；
+5. 风格保持细腻、自然、适合角色卡直接使用。</textarea>
                 </div>
 
                 <!-- 需求4: 流式输出开关 -->
@@ -1000,14 +1014,16 @@
                     </label>
                 </div>
 
-                <div class="ai-generate-area">
-                    <button type="button" class="btn-ai-generate" id="btnGenerate" onclick="generateWithAI()">🤖 开始生成</button>
-                    <span class="ai-status-text" id="aiStatusText"></span>
-                </div>
-
                 <div class="ai-block" style="margin-top:8px;">
+                    <div class="ai-block-hint" id="aiNamingPoolOption" style="margin-bottom:8px;">
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--text-main);">
+                            <input type="checkbox" id="useNamerPoolForAi" onchange="scheduleCloudConfigSync()" style="accent-color: var(--primary-color);">
+                            起名时优先参考【姓池】和【名字字池】中的字；若没有符合要求的组合，再自由发挥
+                        </label>
+                    </div>
                     <div class="json-preview-toggle" id="promptPreviewToggle" onclick="togglePromptPreview()" style="font-size:0.82rem;padding:8px 0;background:none;border:none;">
-                        <span class="arrow">▶</span> <span>预览本次发送消息</span>
+                        <span class="arrow">▶</span> <span id="aiPreviewTitle">📋 本次将发送的消息预览</span>
+                        <span style="font-size:0.75rem;color:var(--text-sub);font-weight:400;">（点击展开/收起）</span>
                     </div>
                     <div id="aiPromptPreviewContent" style="display:none;background:#f8f9fa;border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:14px;font-family:Consolas,monospace;font-size:0.8rem;line-height:1.6;max-height:280px;overflow-y:auto;white-space:pre-wrap;color:#2d3436;"></div>
                 </div>

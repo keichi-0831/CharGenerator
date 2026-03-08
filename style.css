@@ -971,6 +971,38 @@
         .ai-guide-body { margin-top: 8px; }
         .ai-guide-body textarea { min-height: 60px; font-size: 0.88rem; }
         .ai-guide-hint { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 6px; }
+        .pronoun-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .pronoun-role-card {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .pronoun-role-title {
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.88rem;
+        }
+        .pronoun-role-card label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-sub);
+            cursor: pointer;
+        }
+        .pronoun-role-card input[type="radio"] {
+            accent-color: var(--primary-color);
+        }
 
         .ai-subtabs {
             display: flex;

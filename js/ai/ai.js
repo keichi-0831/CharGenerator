@@ -196,6 +196,33 @@ function isOpeningMode() {
     return getActiveAiSubtab() === AI_SUBTAB_OPENING;
 }
 
+function getSelectedPronoun(role) {
+    return document.querySelector(`input[name="${role}PronounMode"]:checked`)?.value || (role === 'char' ? 'third' : 'second');
+}
+
+function getPronounInstructionLine(roleLabel, mode, placeholder) {
+    if (mode === 'first') return `${roleLabel}：使用第一人称。`;
+    if (mode === 'second') return `${roleLabel}：使用第二人称。`;
+    return `${roleLabel}：使用第三人称，并统一使用 ${placeholder} 作为指代占位符。`;
+}
+
+function buildPersonalPronounsBlock() {
+    const enabled = !!document.getElementById('sendPersonalPronounsToAi')?.checked;
+    if (!enabled) return '';
+    const charMode = getSelectedPronoun('char');
+    const userMode = getSelectedPronoun('user');
+    return `<PersonalPronouns>\n${getPronounInstructionLine('character', charMode, '{{char}}')}\n${getPronounInstructionLine('user', userMode, '{{user}}')}\n</PersonalPronouns>\n\n`;
+}
+
+function buildNamerPoolBlock() {
+    const enabled = !!document.getElementById('useNamerPoolForAi')?.checked;
+    if (!enabled || isOpeningMode()) return '';
+    const surnames = (typeof getNamerPool === 'function' ? getNamerPool('surname') : []).filter(Boolean);
+    const charnames = (typeof getNamerPool === 'function' ? getNamerPool('charname') : []).filter(Boolean);
+    if (surnames.length === 0 && charnames.length === 0) return '';
+    return `<naming_reference>\n当你需要为角色起名时，请优先从以下字池中选择并组合：\n姓池：${surnames.length ? surnames.join('、') : '（空）'}\n名池：${charnames.length ? charnames.join('、') : '（空）'}\n请尽量优先使用这些字；如果没有符合设定、音律或气质要求的组合，再自由发挥。\n</naming_reference>\n\n`;
+}
+
 function updateAiInstructionsByActiveTab(force = false) {
     const el = document.getElementById('aiInstructions');
     if (!el) return;
@@ -211,12 +238,12 @@ function updateAiInstructionsByActiveTab(force = false) {
 }
 
 function syncAiTabUI() {
-    const previewBlock = document.getElementById('modulePreviewBlock');
+    const namingPoolOption = document.getElementById('aiNamingPoolOption');
     const previewTitle = document.getElementById('aiPreviewTitle');
     const fillBtn = document.querySelector('.btn-ai-fill');
     const isOpening = isOpeningMode();
-    if (previewBlock) previewBlock.style.display = isOpening ? 'none' : '';
-    if (previewTitle) previewTitle.textContent = isOpening ? '📋 本次将发送的 XML 预览' : '📋 本次将发送的 JSON 格式预览';
+    if (namingPoolOption) namingPoolOption.style.display = isOpening ? 'none' : '';
+    if (previewTitle) previewTitle.textContent = '📋 本次将发送的消息预览';
     if (fillBtn) fillBtn.style.display = isOpening ? 'none' : '';
 }
 
@@ -229,10 +256,11 @@ function buildOpeningPreview() {
     const wordCount = document.getElementById('aiOpeningWordCount')?.value.trim() || '800-1000字';
     const instructions = document.getElementById('aiInstructions')?.value.trim() || AI_OPENING_INSTRUCTIONS_DEFAULT;
     const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
+    const pronounsBlock = buildPersonalPronounsBlock();
     const yamlBlock = yamlCard
         ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
         : '';
-    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
 }
 
 function buildAiMessages() {
@@ -252,10 +280,11 @@ function buildAiMessages() {
 
     if (isOpeningMode()) {
         const yamlCard = typeof generateYaml === 'function' ? (generateYaml() || '').trim() : '';
+        const pronounsBlock = buildPersonalPronounsBlock();
         const yamlBlock = yamlCard
             ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
             : '';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
     } else {
         const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
         const guideTexts = modules.map(m => {
@@ -264,13 +293,14 @@ function buildAiMessages() {
             return guideText ? `【${MODULE_LABELS[m] || m}】${guideText}` : '';
         }).filter(Boolean);
         const selectedSchema = modules.map(m => MODULE_JSON_SCHEMA[m] || '').filter(Boolean);
-        const schemaHeader = '请严格按照以下JSON格式回复，不要包含任何其他文字或markdown标记。\n只需填写被请求的模块，其余留空。列表字段提供2-5个条目，描述精炼有层次感。若表单已有部分内容，你需要进行参考并补全要求的内容。';
-        const dynamicInstructions = instructions || (schemaHeader + '\n\n{\n' + selectedSchema.join(',\n') + '\n}');
+        const schemaHeader = '请严格按照以下 JSON 结构回复，不要包含任何其他文字或 markdown 标记。只需填写被请求的模块，其余留空。';
+        const dynamicInstructions = (instructions || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT) + '\n\n' + schemaHeader;
         const existingRef = includeExistingContent ? buildExistingContentForModules(modules) : '';
+        const namingRef = buildNamerPoolBlock();
         const existingBlock = existingRef
             ? `<existing_filled_content>\n以下是表单里已经写好的内容，请优先参考并保持设定一致，在此基础上补全缺失内容：\n${existingRef}\n</existing_filled_content>\n\n`
             : '';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${existingBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<instructions>\n${dynamicInstructions}\n</instructions>`;
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${namingRef}${existingBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<reply_json_schema>\n{\n${selectedSchema.join(',\n')}\n}\n</reply_json_schema>\n\n<instructions>\n${dynamicInstructions}\n</instructions>`;
     }
 
     return { systemMsg, userMsg, modules };
@@ -352,32 +382,7 @@ function buildExistingContentForModules(modules) {
     return Object.keys(cleaned).length ? JSON.stringify(cleaned, null, 2) : '';
 }
 
-function toggleJsonPreview() {
-    const preview = document.getElementById('moduleJsonPreview');
-    const toggle = document.getElementById('jsonPreviewToggle');
-    if (preview.style.display === 'none') {
-        preview.style.display = '';
-        toggle.classList.add('open');
-        updateModulePreview();
-    } else {
-        preview.style.display = 'none';
-        toggle.classList.remove('open');
-    }
-}
-
-function updateModulePreview() {
-    const el = document.getElementById('moduleJsonPreview');
-    if (!el || el.style.display === 'none') return;
-    if (isOpeningMode()) {
-        el.textContent = buildOpeningPreview();
-        return;
-    }
-    const modules = getSelectedModules();
-    if (modules.length === 0) { el.textContent = '（未勾选任何模块）'; return; }
-    const header = '请严格按照以下JSON格式回复，不要包含任何其他文字或markdown标记。\n只需填写被请求的模块，其余留空。列表字段提供2-5个条目，描述精炼有层次感。\n\n{\n';
-    const lines = modules.map(m => MODULE_JSON_SCHEMA[m] || '').filter(Boolean);
-    el.textContent = header + lines.join(',\n') + '\n}';
-}
+function updateModulePreview() { updatePromptPreview(); }
 
 function bindModuleCheckboxes() {
     document.querySelectorAll('input[name="aiModule"]').forEach(cb => {
@@ -429,11 +434,18 @@ function bindAiSubTabEvents() {
         }
     });
 
-    ['aiPersona', 'aiTrope', 'aiXpCore', 'sendTropeToAi', 'includeExistingContentToAi'].forEach(id => {
+    ['aiPersona', 'aiTrope', 'aiXpCore', 'sendTropeToAi', 'includeExistingContentToAi', 'useNamerPoolForAi', 'sendPersonalPronounsToAi'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const eventName = el.type === 'checkbox' ? 'change' : 'input';
         el.addEventListener(eventName, updatePromptPreview);
+    });
+
+    document.querySelectorAll('input[name="charPronounMode"], input[name="userPronounMode"]').forEach(el => {
+        el.addEventListener('change', () => {
+            scheduleCloudConfigSync();
+            updatePromptPreview();
+        });
     });
 
     document.querySelectorAll('[id^="guide_"]').forEach(el => {
