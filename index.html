@@ -1004,6 +1004,13 @@
                     <button type="button" class="btn-ai-generate" id="btnGenerate" onclick="generateWithAI()">🤖 开始生成</button>
                     <span class="ai-status-text" id="aiStatusText"></span>
                 </div>
+
+                <div class="ai-block" style="margin-top:8px;">
+                    <div class="json-preview-toggle" id="promptPreviewToggle" onclick="togglePromptPreview()" style="font-size:0.82rem;padding:8px 0;background:none;border:none;">
+                        <span class="arrow">▶</span> <span>预览本次发送消息</span>
+                    </div>
+                    <div id="aiPromptPreviewContent" style="display:none;background:#f8f9fa;border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:14px;font-family:Consolas,monospace;font-size:0.8rem;line-height:1.6;max-height:280px;overflow-y:auto;white-space:pre-wrap;color:#2d3436;"></div>
+                </div>
             </div>
 
             <!-- 需求4: AI原始回复内容区域 -->

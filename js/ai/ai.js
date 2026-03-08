@@ -224,11 +224,77 @@ function buildOpeningPreview() {
     const xpCore = document.getElementById('aiXpCore')?.value.trim() || '';
     const trope = document.getElementById('aiTrope')?.value.trim() || '';
     const sendTrope = !!document.getElementById('sendTropeToAi')?.checked;
+    const yamlCard = typeof generateYaml === 'function' ? (generateYaml() || '').trim() : '';
     const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
     const wordCount = document.getElementById('aiOpeningWordCount')?.value.trim() || '800-1000字';
     const instructions = document.getElementById('aiInstructions')?.value.trim() || AI_OPENING_INSTRUCTIONS_DEFAULT;
     const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
-    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+    const yamlBlock = yamlCard
+        ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
+        : '';
+    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+}
+
+function buildAiMessages() {
+    const persona = document.getElementById('aiPersona').value.trim();
+    const trope = document.getElementById('aiTrope').value.trim();
+    const sendTrope = document.getElementById('sendTropeToAi').checked;
+    const includeExistingContent = document.getElementById('includeExistingContentToAi')?.checked;
+    const xpCore = document.getElementById('aiXpCore').value.trim();
+    const modules = getSelectedModules();
+    const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
+    const wordCount = document.getElementById('aiOpeningWordCount')?.value.trim() || '800-1000字';
+    const instructions = document.getElementById('aiInstructions')?.value.trim() || (isOpeningMode() ? AI_OPENING_INSTRUCTIONS_DEFAULT : AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT);
+
+    const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
+    const systemMsg = `<persona>\n${persona}\n</persona>`;
+    let userMsg = '';
+
+    if (isOpeningMode()) {
+        const yamlCard = typeof generateYaml === 'function' ? (generateYaml() || '').trim() : '';
+        const yamlBlock = yamlCard
+            ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
+            : '';
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+    } else {
+        const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
+        const guideTexts = modules.map(m => {
+            const guideEl = document.getElementById('guide_' + m);
+            const guideText = guideEl ? guideEl.value.trim() : '';
+            return guideText ? `【${MODULE_LABELS[m] || m}】${guideText}` : '';
+        }).filter(Boolean);
+        const selectedSchema = modules.map(m => MODULE_JSON_SCHEMA[m] || '').filter(Boolean);
+        const schemaHeader = '请严格按照以下JSON格式回复，不要包含任何其他文字或markdown标记。\n只需填写被请求的模块，其余留空。列表字段提供2-5个条目，描述精炼有层次感。若表单已有部分内容，你需要进行参考并补全要求的内容。';
+        const dynamicInstructions = instructions || (schemaHeader + '\n\n{\n' + selectedSchema.join(',\n') + '\n}');
+        const existingRef = includeExistingContent ? buildExistingContentForModules(modules) : '';
+        const existingBlock = existingRef
+            ? `<existing_filled_content>\n以下是表单里已经写好的内容，请优先参考并保持设定一致，在此基础上补全缺失内容：\n${existingRef}\n</existing_filled_content>\n\n`
+            : '';
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${existingBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<instructions>\n${dynamicInstructions}\n</instructions>`;
+    }
+
+    return { systemMsg, userMsg, modules };
+}
+
+function togglePromptPreview() {
+    const preview = document.getElementById('aiPromptPreviewContent');
+    const toggle = document.getElementById('promptPreviewToggle');
+    if (!preview || !toggle) return;
+    if (preview.style.display === 'none') {
+        preview.style.display = '';
+        toggle.classList.add('open');
+        updatePromptPreview();
+    } else {
+        preview.style.display = 'none';
+        toggle.classList.remove('open');
+    }
+}
+
+function updatePromptPreview() {
+    const el = document.getElementById('aiPromptPreviewContent');
+    if (!el || el.style.display === 'none') return;
+    const { systemMsg, userMsg } = buildAiMessages();
+    el.textContent = `[system]\n${systemMsg}\n\n[user]\n${userMsg}`;
 }
 
 function pruneEmptyDeep(value) {
@@ -315,7 +381,10 @@ function updateModulePreview() {
 
 function bindModuleCheckboxes() {
     document.querySelectorAll('input[name="aiModule"]').forEach(cb => {
-        cb.addEventListener('change', updateModulePreview);
+        cb.addEventListener('change', () => {
+            updateModulePreview();
+            updatePromptPreview();
+        });
     });
 }
 
@@ -334,6 +403,7 @@ function bindAiSubTabEvents() {
             updateAiInstructionsByActiveTab();
             syncAiTabUI();
             updateModulePreview();
+            updatePromptPreview();
             scheduleCloudConfigSync();
         });
     });
@@ -344,6 +414,7 @@ function bindAiSubTabEvents() {
             AppState.aiInstructionDrafts[getActiveAiSubtab()] = instructionsEl.value;
             scheduleCloudConfigSync();
             updateModulePreview();
+            updatePromptPreview();
         });
     }
 
@@ -352,9 +423,21 @@ function bindAiSubTabEvents() {
         if (el) {
             el.addEventListener('input', () => {
                 if (isOpeningMode()) updateModulePreview();
+                updatePromptPreview();
                 scheduleCloudConfigSync();
             });
         }
+    });
+
+    ['aiPersona', 'aiTrope', 'aiXpCore', 'sendTropeToAi', 'includeExistingContentToAi'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const eventName = el.type === 'checkbox' ? 'change' : 'input';
+        el.addEventListener(eventName, updatePromptPreview);
+    });
+
+    document.querySelectorAll('[id^="guide_"]').forEach(el => {
+        el.addEventListener('input', updatePromptPreview);
     });
 
     updateAiInstructionsByActiveTab(true);
@@ -410,16 +493,10 @@ function copyRawReply() {
 async function generateWithAI() {
     const baseUrl = document.getElementById('aiBaseUrl').value.trim().replace(/\/+$/, '');
     const apiKey = document.getElementById('aiApiKey').value.trim();
-    const persona = document.getElementById('aiPersona').value.trim();
-    const trope = document.getElementById('aiTrope').value.trim();
-    const sendTrope = document.getElementById('sendTropeToAi').checked;
-    const includeExistingContent = document.getElementById('includeExistingContentToAi')?.checked;
     const xpCore = document.getElementById('aiXpCore').value.trim();
-    const modules = getSelectedModules();
+    const { systemMsg, userMsg, modules } = buildAiMessages();
     const useStream = document.getElementById('enableStream').checked;
     const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
-    const wordCount = document.getElementById('aiOpeningWordCount')?.value.trim() || '800-1000字';
-    const instructions = document.getElementById('aiInstructions')?.value.trim() || (isOpeningMode() ? AI_OPENING_INSTRUCTIONS_DEFAULT : AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT);
 
     if (!baseUrl) { showToast('请先填写 API 地址'); return; }
     if (!AppState.selectedModel) { showToast('请先获取并选择一个模型'); return; }
@@ -436,29 +513,6 @@ async function generateWithAI() {
     rawReplySection.style.display = '';
     const rawReplyContent = document.getElementById('aiRawReplyContent');
     rawReplyContent.textContent = '⏳ 等待AI回复…';
-
-    const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
-    const systemMsg = `<persona>\n${persona}\n</persona>`;
-    let userMsg = '';
-
-    if (isOpeningMode()) {
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
-    } else {
-        const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
-        const guideTexts = modules.map(m => {
-            const guideEl = document.getElementById('guide_' + m);
-            const guideText = guideEl ? guideEl.value.trim() : '';
-            return guideText ? `【${MODULE_LABELS[m] || m}】${guideText}` : '';
-        }).filter(Boolean);
-        const selectedSchema = modules.map(m => MODULE_JSON_SCHEMA[m] || '').filter(Boolean);
-        const schemaHeader = '请严格按照以下JSON格式回复，不要包含任何其他文字或markdown标记。\n只需填写被请求的模块，其余留空。列表字段提供2-5个条目，描述精炼有层次感。若表单已有部分内容，你需要进行参考并补全要求的内容。';
-        const dynamicInstructions = instructions || (schemaHeader + '\n\n{\n' + selectedSchema.join(',\n') + '\n}');
-        const existingRef = includeExistingContent ? buildExistingContentForModules(modules) : '';
-        const existingBlock = existingRef
-            ? `<existing_filled_content>\n以下是表单里已经写好的内容，请优先参考并保持设定一致，在此基础上补全缺失内容：\n${existingRef}\n</existing_filled_content>\n\n`
-            : '';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${existingBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<instructions>\n${dynamicInstructions}\n</instructions>`;
-    }
 
     try {
         if (useStream) await generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyContent);
