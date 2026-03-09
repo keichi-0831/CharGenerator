@@ -950,7 +950,7 @@
                                 </label>
                                 <div class="ai-guide-body">
                                     <div class="ai-guide-hint">引导 AI 直接生成故事开篇正文，不走人设卡 JSON 填表模式</div>
-                                    <textarea id="guide_opening_scene">请尽量详细描述你想要和这个 character 的故事开端：初见场景、时间地点、双方关系、情绪氛围、冲突伏笔、你想看的互动张力、叙事视角等。信息越细，AI 生成的开场白越贴近你的预期。</textarea>
+                                    <textarea id="guide_opening_scene">请尽量详细描述你想要和{{char}}的故事开端：初见场景、时间地点、双方关系、情绪氛围、冲突伏笔、你想看的互动张力、叙事视角等。信息越细，AI 生成的开场白越贴近你的预期。</textarea>
                                 </div>
                             </div>
 
@@ -964,7 +964,7 @@
                                         <input type="checkbox" id="sendPersonalPronounsToAi" onchange="scheduleCloudConfigSync()" style="accent-color: var(--primary-color);">
                                         将 <code>&lt;PersonalPronouns&gt;</code> 标签一并发送给 AI
                                     </label>
-                                    <div class="ai-guide-hint">可分别指定 character 与 user 在开场白里适合使用的第 1 / 2 / 3 人称。若选择第三人称，会提示 AI 使用 {{char}} / {{user}} 作为占位符。</div>
+                                    <div class="ai-guide-hint">可分别指定 char 与 user 在开场白里适合使用的第 1 / 2 / 3 人称。若选择第三人称，会提示 AI 使用 {{char}} / {{user}} 作为占位符。</div>
                                     <div class="pronoun-grid">
                                         <div class="pronoun-role-card">
                                             <div class="pronoun-role-title">character</div>
@@ -977,6 +977,23 @@
                                             <label><input type="radio" name="userPronounMode" value="first"> 第一人称</label>
                                             <label><input type="radio" name="userPronounMode" value="second" checked> 第二人称</label>
                                             <label><input type="radio" name="userPronounMode" value="third"> 第三人称（{{user}}）</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header" style="cursor:default;">
+                                    <span class="guide-tag">UserPortrayal</span>
+                                    <span class="guide-title">抢话设置</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">选“抢话”时，会发送当前允许描写 {{user}} 的 prompt；选“不抢话”时，会严令禁止 AI 描写 {{user}} 的任何言行举止和心理活动。</div>
+                                    <div class="pronoun-grid">
+                                        <div class="pronoun-role-card">
+                                            <div class="pronoun-role-title">UserPortrayal</div>
+                                            <label><input type="radio" name="openingUserPortrayalMode" value="allow"> 抢话</label>
+                                            <label><input type="radio" name="openingUserPortrayalMode" value="disallow" checked> 不抢话</label>
                                         </div>
                                     </div>
                                 </div>

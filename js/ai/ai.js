@@ -48,6 +48,7 @@ function collectAiUiState() {
         xpCore: getVal('aiXpCore', ''),
         trope: getVal('aiTrope', ''),
         openingWordCount: getVal('aiOpeningWordCount', '800-1000字'),
+        openingUserPortrayalMode: document.querySelector('input[name="openingUserPortrayalMode"]:checked')?.value || 'disallow',
         sendTropeToAi: getChecked('sendTropeToAi', true),
         includeExistingContentToAi: getChecked('includeExistingContentToAi', true),
         useNamerPoolForAi: getChecked('useNamerPoolForAi', false),
@@ -86,6 +87,11 @@ function applyAiUiState(state) {
     setChecked('useNamerPoolForAi', state.useNamerPoolForAi);
     setChecked('enableStream', state.enableStream);
     setChecked('sendPersonalPronounsToAi', state.sendPersonalPronounsToAi);
+
+    const openingUserPortrayalMode = state.openingUserPortrayalMode
+        || (state.sendOpeningUserPortrayalToAi ? 'allow' : 'disallow');
+    const openingUserPortrayalRadio = document.querySelector(`input[name="openingUserPortrayalMode"][value="${openingUserPortrayalMode}"]`);
+    if (openingUserPortrayalRadio) openingUserPortrayalRadio.checked = true;
 
     if (state.charPronounMode) {
         const charRadio = document.querySelector(`input[name="charPronounMode"][value="${state.charPronounMode}"]`);
@@ -380,6 +386,14 @@ function buildPersonalPronounsBlock() {
     return `<PersonalPronouns>\n${getPronounInstructionLine('character', charMode, '{{char}}')}\n${getPronounInstructionLine('user', userMode, '{{user}}')}\n</PersonalPronouns>\n\n`;
 }
 
+function buildOpeningUserPortrayalBlock() {
+    const mode = document.querySelector('input[name="openingUserPortrayalMode"]:checked')?.value || 'disallow';
+    if (mode === 'allow') {
+        return `<UserPortrayal>\n允许在开场白中适度描写 {{user}} 的言行举止、即时反应与心理活动，用于推进互动张力与场景节奏。\n描写 {{user}} 时请保持自然、克制、贴合当前情境，不要喧宾夺主，也不要让 {{user}} 的表现脱离已给出的设定与场景需求。\n</UserPortrayal>\n\n`;
+    }
+    return `<UserPortrayal>\n严令禁止描写 {{user}} 的任何言行举止、即时反应与心理活动。\n你只能描写 {{char}}、环境、氛围与客观可见的信息，不得替 {{user}} 说话、行动、做决定、产生心理活动，也不得补写任何属于 {{user}} 的主观或客观表现。\n</UserPortrayal>\n\n`;
+}
+
 function buildNamerPoolBlock() {
     const enabled = !!document.getElementById('useNamerPoolForAi')?.checked;
     if (!enabled || isOpeningMode()) return '';
@@ -426,10 +440,11 @@ function buildOpeningPreview() {
     const instructions = document.getElementById('aiInstructions')?.value.trim() || AI_OPENING_INSTRUCTIONS_DEFAULT;
     const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
     const pronounsBlock = buildPersonalPronounsBlock();
+    const userPortrayalBlock = buildOpeningUserPortrayalBlock();
     const yamlBlock = yamlCard
         ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
         : '';
-    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
 }
 
 function buildAiMessages() {
@@ -450,10 +465,11 @@ function buildAiMessages() {
     if (isOpeningMode()) {
         const yamlCard = typeof generateYaml === 'function' ? (generateYaml() || '').trim() : '';
         const pronounsBlock = buildPersonalPronounsBlock();
+        const userPortrayalBlock = buildOpeningUserPortrayalBlock();
         const yamlBlock = yamlCard
             ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
             : '';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
     } else {
         const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
         const guideTexts = modules.map(m => {
@@ -629,6 +645,14 @@ function bindAiSubTabEvents() {
     }
 
     document.querySelectorAll('input[name="charPronounMode"], input[name="userPronounMode"]').forEach(el => {
+        el.addEventListener('change', () => {
+            persistAiUiState();
+            scheduleCloudConfigSync();
+            updatePromptPreview();
+        });
+    });
+
+    document.querySelectorAll('input[name="openingUserPortrayalMode"]').forEach(el => {
         el.addEventListener('change', () => {
             persistAiUiState();
             scheduleCloudConfigSync();
