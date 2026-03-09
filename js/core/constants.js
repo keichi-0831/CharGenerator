@@ -64,6 +64,7 @@ const LS_CHARNAMES = 'rp_namer_charnames';
 const LS_AI_PROVIDERS = 'rp_ai_providers';
 const LS_AI_CURRENT_P = 'rp_ai_current_provider';
 const LS_AI_CONFIG = 'rp_ai_config';
+const LS_AI_UI_STATE = 'rp_ai_ui_state';
 const CLOUD_META_CONFIG_ID = '__cloud_meta_config__';
 
 const SUPABASE_URL = 'https://cukfyqnrsrikimipbyrh.supabase.co';

@@ -7,6 +7,117 @@ function getCurrentProviderId() { return localStorage.getItem(LS_AI_CURRENT_P) |
 function setCurrentProviderId(id) { localStorage.setItem(LS_AI_CURRENT_P, id); }
 function generateProviderId() { return 'prov_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5); }
 
+function getAiUiState() {
+    try { return JSON.parse(localStorage.getItem(LS_AI_UI_STATE)) || {}; } catch (e) { return {}; }
+}
+
+function saveAiUiState(state) {
+    localStorage.setItem(LS_AI_UI_STATE, JSON.stringify(state || {}));
+}
+
+function collectAiUiState() {
+    const getVal = (id, fallback = '') => {
+        const el = document.getElementById(id);
+        return el ? el.value : fallback;
+    };
+    const getChecked = (id, fallback = false) => {
+        const el = document.getElementById(id);
+        return el ? !!el.checked : fallback;
+    };
+    const moduleChecks = {};
+    document.querySelectorAll('input[name="aiModule"]').forEach(el => {
+        moduleChecks[el.value] = !!el.checked;
+    });
+    const moduleGuides = {};
+    ['basic','background','appearance','personality','user_relation','behavior','speech','extra','nsfw'].forEach(k => {
+        moduleGuides[k] = getVal('guide_' + k, '');
+    });
+    moduleGuides.opening_scene = getVal('guide_opening_scene', '');
+
+    const instructionDrafts = {
+        [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
+        [AI_SUBTAB_WORLDVIEW]: '',
+        [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT,
+        ...(AppState.aiInstructionDrafts || {})
+    };
+    const currentTab = getActiveAiSubtab();
+    instructionDrafts[currentTab] = getVal('aiInstructions', instructionDrafts[currentTab] || '');
+
+    return {
+        persona: getVal('aiPersona', ''),
+        xpCore: getVal('aiXpCore', ''),
+        trope: getVal('aiTrope', ''),
+        openingWordCount: getVal('aiOpeningWordCount', '800-1000字'),
+        sendTropeToAi: getChecked('sendTropeToAi', true),
+        includeExistingContentToAi: getChecked('includeExistingContentToAi', true),
+        useNamerPoolForAi: getChecked('useNamerPoolForAi', false),
+        enableStream: getChecked('enableStream', true),
+        sendPersonalPronounsToAi: getChecked('sendPersonalPronounsToAi', false),
+        charPronounMode: document.querySelector('input[name="charPronounMode"]:checked')?.value || 'third',
+        userPronounMode: document.querySelector('input[name="userPronounMode"]:checked')?.value || 'second',
+        activeSubtab: currentTab,
+        moduleChecks,
+        moduleGuides,
+        instructionDrafts
+    };
+}
+
+function persistAiUiState() {
+    saveAiUiState(collectAiUiState());
+}
+
+function applyAiUiState(state) {
+    if (!state || typeof state !== 'object') return;
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val !== undefined && val !== null) el.value = String(val);
+    };
+    const setChecked = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val !== undefined) el.checked = !!val;
+    };
+
+    setVal('aiPersona', state.persona);
+    setVal('aiXpCore', state.xpCore);
+    if (!document.getElementById('aiTrope')?.value) setVal('aiTrope', state.trope || '');
+    setVal('aiOpeningWordCount', state.openingWordCount);
+    setChecked('sendTropeToAi', state.sendTropeToAi);
+    setChecked('includeExistingContentToAi', state.includeExistingContentToAi);
+    setChecked('useNamerPoolForAi', state.useNamerPoolForAi);
+    setChecked('enableStream', state.enableStream);
+    setChecked('sendPersonalPronounsToAi', state.sendPersonalPronounsToAi);
+
+    if (state.charPronounMode) {
+        const charRadio = document.querySelector(`input[name="charPronounMode"][value="${state.charPronounMode}"]`);
+        if (charRadio) charRadio.checked = true;
+    }
+    if (state.userPronounMode) {
+        const userRadio = document.querySelector(`input[name="userPronounMode"][value="${state.userPronounMode}"]`);
+        if (userRadio) userRadio.checked = true;
+    }
+
+    if (state.moduleChecks && typeof state.moduleChecks === 'object') {
+        document.querySelectorAll('input[name="aiModule"]').forEach(el => {
+            if (state.moduleChecks[el.value] !== undefined) el.checked = !!state.moduleChecks[el.value];
+        });
+    }
+
+    if (state.moduleGuides && typeof state.moduleGuides === 'object') {
+        Object.entries(state.moduleGuides).forEach(([k, v]) => {
+            const targetId = k === 'opening_scene' ? 'guide_opening_scene' : 'guide_' + k;
+            setVal(targetId, v);
+        });
+    }
+
+    AppState.aiInstructionDrafts = {
+        [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
+        [AI_SUBTAB_WORLDVIEW]: '',
+        [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT,
+        ...(state.instructionDrafts || {})
+    };
+    AppState.aiActiveSubtab = state.activeSubtab || AppState.aiActiveSubtab || AI_SUBTAB_PERSONA_CARD;
+}
+
 function migrateOldAiConfig() {
     const providers = getProviders();
     if (Object.keys(providers).length > 0) return;
@@ -23,6 +134,7 @@ function migrateOldAiConfig() {
 
 function initProviderSystem() {
     migrateOldAiConfig();
+    applyAiUiState(getAiUiState());
     let providers = getProviders();
     let currentId = getCurrentProviderId();
     if (Object.keys(providers).length === 0) {
@@ -54,6 +166,7 @@ function renderProviderSelect(providers, currentId) {
 
 function switchProvider(newId) {
     saveCurrentProviderConfig();
+    persistAiUiState();
     setCurrentProviderId(newId);
     loadProviderConfig(newId);
     document.getElementById('modelList').innerHTML = '';
@@ -82,6 +195,7 @@ function saveCurrentProviderConfig() {
     providers[id].apiKey = document.getElementById('aiApiKey').value.trim();
     providers[id].selectedModel = AppState.selectedModel || '';
     saveProviders(providers);
+    persistAiUiState();
     scheduleCloudConfigSync();
 }
 
@@ -176,6 +290,7 @@ function renderModelList(models) {
             document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             AppState.selectedModel = id;
+            saveCurrentProviderConfig();
             scheduleCloudConfigSync();
         };
         list.appendChild(card);
@@ -221,6 +336,7 @@ function refreshAiCacheDisplay() {
     const cache = typeof getCurrentCharAiCache === 'function' ? getCurrentCharAiCache(tabKey) : null;
     AppState.aiLastJson = parseCachedAiEntry(cache, tabKey);
     AppState.aiLastModules = Array.isArray(cache?.modules) ? cache.modules : [];
+    const generateStatusEl = document.getElementById('aiGenerateStatus') || document.getElementById('aiStatusText');
 
     if (!cache || !cache.raw) {
         rawSection.style.display = 'none';
@@ -228,6 +344,7 @@ function refreshAiCacheDisplay() {
         rawContent.textContent = '等待生成…';
         resultContent.textContent = '';
         badges.innerHTML = '';
+        if (generateStatusEl) generateStatusEl.textContent = '';
         if (fillBtn) fillBtn.style.display = isOpeningMode() ? 'none' : '';
         return;
     }
@@ -235,6 +352,10 @@ function refreshAiCacheDisplay() {
     rawSection.style.display = '';
     rawContent.textContent = cache.raw;
     showAiResult(cache.raw, cache.modules || []);
+    if (generateStatusEl) {
+        generateStatusEl.textContent = isOpeningMode() ? '已恢复上次生成的开场白缓存' : '已恢复上次 AI 生成缓存';
+        generateStatusEl.className = 'ai-status-text success';
+    }
 }
 
 function isOpeningMode() {
@@ -278,8 +399,11 @@ function updateAiInstructionsByActiveTab(force = false) {
         [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT
     };
     const currentDefault = defaults[activeTab] || '';
-    if (force || !el.value.trim()) el.value = currentDefault;
-    else if (AppState.aiInstructionDrafts && AppState.aiInstructionDrafts[activeTab] !== undefined) el.value = AppState.aiInstructionDrafts[activeTab];
+    const draftValue = AppState.aiInstructionDrafts && AppState.aiInstructionDrafts[activeTab] !== undefined
+        ? AppState.aiInstructionDrafts[activeTab]
+        : undefined;
+    if (force) el.value = draftValue !== undefined ? draftValue : currentDefault;
+    else if (!el.value.trim()) el.value = draftValue !== undefined ? draftValue : currentDefault;
 }
 
 function syncAiTabUI() {
@@ -432,8 +556,10 @@ function updateModulePreview() { updatePromptPreview(); }
 function bindModuleCheckboxes() {
     document.querySelectorAll('input[name="aiModule"]').forEach(cb => {
         cb.addEventListener('change', () => {
+            persistAiUiState();
             updateModulePreview();
             updatePromptPreview();
+            scheduleCloudConfigSync();
         });
     });
 }
@@ -450,6 +576,7 @@ function bindAiSubTabEvents() {
             const panel = document.getElementById('ai-subtab-' + btn.dataset.aiTab);
             if (panel) panel.classList.add('active');
             AppState.aiActiveSubtab = btn.dataset.aiTab;
+            persistAiUiState();
             updateAiInstructionsByActiveTab();
             syncAiTabUI();
             updateModulePreview();
@@ -463,6 +590,7 @@ function bindAiSubTabEvents() {
     if (instructionsEl) {
         instructionsEl.addEventListener('input', () => {
             AppState.aiInstructionDrafts[getActiveAiSubtab()] = instructionsEl.value;
+            persistAiUiState();
             scheduleCloudConfigSync();
             updateModulePreview();
             updatePromptPreview();
@@ -473,6 +601,7 @@ function bindAiSubTabEvents() {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', () => {
+                persistAiUiState();
                 if (isOpeningMode()) updateModulePreview();
                 updatePromptPreview();
                 scheduleCloudConfigSync();
@@ -484,22 +613,40 @@ function bindAiSubTabEvents() {
         const el = document.getElementById(id);
         if (!el) return;
         const eventName = el.type === 'checkbox' ? 'change' : 'input';
-        el.addEventListener(eventName, updatePromptPreview);
+        el.addEventListener(eventName, () => {
+            persistAiUiState();
+            updatePromptPreview();
+            scheduleCloudConfigSync();
+        });
     });
+
+    const enableStreamEl = document.getElementById('enableStream');
+    if (enableStreamEl) {
+        enableStreamEl.addEventListener('change', () => {
+            persistAiUiState();
+            scheduleCloudConfigSync();
+        });
+    }
 
     document.querySelectorAll('input[name="charPronounMode"], input[name="userPronounMode"]').forEach(el => {
         el.addEventListener('change', () => {
+            persistAiUiState();
             scheduleCloudConfigSync();
             updatePromptPreview();
         });
     });
 
     document.querySelectorAll('[id^="guide_"]').forEach(el => {
-        el.addEventListener('input', updatePromptPreview);
+        el.addEventListener('input', () => {
+            persistAiUiState();
+            updatePromptPreview();
+            scheduleCloudConfigSync();
+        });
     });
 
     updateAiInstructionsByActiveTab(true);
     syncAiTabUI();
+    persistAiUiState();
     refreshAiCacheDisplay();
 }
 
@@ -697,6 +844,7 @@ async function generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawR
 function processAiResult(raw, modules) {
     const tabKey = getActiveAiSubtab();
     saveCurrentCharAiCache(tabKey, buildAiCachePayload(raw, modules));
+    persistAiUiState();
     AppState.aiLastModules = Array.isArray(modules) ? modules : [];
     if (isOpeningMode()) {
         AppState.aiLastJson = null;

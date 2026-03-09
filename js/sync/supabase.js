@@ -63,6 +63,8 @@ function getCloudMetaConfigSnapshot() {
             pronouns,
             moduleChecks,
             moduleGuides,
+            trope: getVal('aiTrope', ''),
+            instructionDrafts: AppState.aiInstructionDrafts || {},
         }
     };
 }
@@ -96,8 +98,17 @@ function applyCloudMetaConfig(cfg) {
             };
             setVal('aiPersona', cfg.ai.persona);
             setVal('aiXpCore', cfg.ai.xpCore);
+            setVal('aiTrope', cfg.ai.trope);
             setVal('aiInstructions', cfg.ai.instructions);
             setVal('aiOpeningWordCount', cfg.ai.openingWordCount);
+            if (cfg.ai.instructionDrafts && typeof cfg.ai.instructionDrafts === 'object') {
+                AppState.aiInstructionDrafts = {
+                    [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
+                    [AI_SUBTAB_WORLDVIEW]: '',
+                    [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT,
+                    ...cfg.ai.instructionDrafts
+                };
+            }
             setChecked('sendTropeToAi', cfg.ai.sendTropeToAi);
             setChecked('includeExistingContentToAi', cfg.ai.includeExistingContentToAi);
             setChecked('useNamerPoolForAi', cfg.ai.useNamerPoolForAi);
