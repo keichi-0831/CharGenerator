@@ -321,11 +321,48 @@ function buildAiCachePayload(raw, modules) {
     };
 }
 
-function parseCachedAiEntry(entry, tabKey) {
-    if (!entry || !entry.raw) return null;
-    if (tabKey === AI_SUBTAB_PERSONA_CARD) {
-        return extractJsonFromText(entry.raw);
+function inferModulesFromParsedJson(parsed) {
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return [];
+    return Object.keys(parsed).filter(key => Object.prototype.hasOwnProperty.call(MODULE_LABELS, key));
+}
+
+function normalizeAiCacheEntry(entry, tabKey = getActiveAiSubtab()) {
+    if (!entry) return null;
+    if (typeof entry === 'string') {
+        const parsed = tabKey === AI_SUBTAB_PERSONA_CARD ? extractJsonFromText(entry) : null;
+        return {
+            raw: entry,
+            modules: inferModulesFromParsedJson(parsed),
+            parsed,
+            updatedAt: null
+        };
     }
+    if (typeof entry !== 'object') return null;
+
+    const raw = typeof entry.raw === 'string'
+        ? entry.raw
+        : (typeof entry.content === 'string'
+            ? entry.content
+            : (typeof entry.reply === 'string' ? entry.reply : ''));
+    if (!raw.trim()) return null;
+
+    const parsed = tabKey === AI_SUBTAB_PERSONA_CARD ? extractJsonFromText(raw) : null;
+    const modules = Array.isArray(entry.modules) && entry.modules.length
+        ? entry.modules
+        : inferModulesFromParsedJson(parsed);
+
+    return {
+        ...entry,
+        raw,
+        modules,
+        parsed
+    };
+}
+
+function parseCachedAiEntry(entry, tabKey) {
+    const normalized = normalizeAiCacheEntry(entry, tabKey);
+    if (!normalized) return null;
+    if (tabKey === AI_SUBTAB_PERSONA_CARD) return normalized.parsed || null;
     return null;
 }
 
@@ -340,11 +377,12 @@ function refreshAiCacheDisplay() {
 
     const tabKey = getActiveAiSubtab();
     const cache = typeof getCurrentCharAiCache === 'function' ? getCurrentCharAiCache(tabKey) : null;
-    AppState.aiLastJson = parseCachedAiEntry(cache, tabKey);
-    AppState.aiLastModules = Array.isArray(cache?.modules) ? cache.modules : [];
+    const normalizedCache = normalizeAiCacheEntry(cache, tabKey);
+    AppState.aiLastJson = parseCachedAiEntry(normalizedCache, tabKey);
+    AppState.aiLastModules = Array.isArray(normalizedCache?.modules) ? normalizedCache.modules : [];
     const generateStatusEl = document.getElementById('aiGenerateStatus') || document.getElementById('aiStatusText');
 
-    if (!cache || !cache.raw) {
+    if (!normalizedCache || !normalizedCache.raw) {
         rawSection.style.display = 'none';
         resultSection.style.display = 'none';
         rawContent.textContent = '等待生成…';
@@ -356,8 +394,8 @@ function refreshAiCacheDisplay() {
     }
 
     rawSection.style.display = '';
-    rawContent.textContent = cache.raw;
-    showAiResult(cache.raw, cache.modules || []);
+    rawContent.textContent = normalizedCache.raw;
+    showAiResult(normalizedCache.raw, normalizedCache.modules || []);
     if (generateStatusEl) {
         generateStatusEl.textContent = isOpeningMode() ? '已恢复上次生成的开场白缓存' : '已恢复上次 AI 生成缓存';
         generateStatusEl.className = 'ai-status-text success';
