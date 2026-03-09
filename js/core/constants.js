@@ -94,6 +94,7 @@ const MODULE_JSON_SCHEMA = {
 const AI_SUBTAB_PERSONA_CARD = 'persona-card';
 const AI_SUBTAB_WORLDVIEW = 'worldview';
 const AI_SUBTAB_OPENING = 'opening';
+const AI_CACHE_TABS = [AI_SUBTAB_PERSONA_CARD, AI_SUBTAB_WORLDVIEW, AI_SUBTAB_OPENING];
 
 const AI_PRONOUN_LABELS = {
     first: '第一人称',
@@ -125,6 +126,7 @@ window.AppState = window.AppState || {
     hasPendingCloudChanges: false,
     saveTimer: null,
     aiLastJson: null,
+    aiLastModules: [],
     aiActiveSubtab: AI_SUBTAB_PERSONA_CARD,
     aiInstructionDrafts: {
         [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,

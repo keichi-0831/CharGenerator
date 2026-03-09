@@ -192,6 +192,51 @@ function getActiveAiSubtab() {
     return AppState.aiActiveSubtab || AI_SUBTAB_PERSONA_CARD;
 }
 
+function buildAiCachePayload(raw, modules) {
+    return {
+        raw: String(raw || ''),
+        modules: Array.isArray(modules) ? modules : [],
+        updatedAt: Date.now()
+    };
+}
+
+function parseCachedAiEntry(entry, tabKey) {
+    if (!entry || !entry.raw) return null;
+    if (tabKey === AI_SUBTAB_PERSONA_CARD) {
+        return extractJsonFromText(entry.raw);
+    }
+    return null;
+}
+
+function refreshAiCacheDisplay() {
+    const rawSection = document.getElementById('aiRawReplySection');
+    const rawContent = document.getElementById('aiRawReplyContent');
+    const resultSection = document.getElementById('aiResultSection');
+    const resultContent = document.getElementById('aiRawResult');
+    const badges = document.getElementById('aiFillBadges');
+    const fillBtn = document.querySelector('.btn-ai-fill');
+    if (!rawSection || !rawContent || !resultSection || !resultContent || !badges) return;
+
+    const tabKey = getActiveAiSubtab();
+    const cache = typeof getCurrentCharAiCache === 'function' ? getCurrentCharAiCache(tabKey) : null;
+    AppState.aiLastJson = parseCachedAiEntry(cache, tabKey);
+    AppState.aiLastModules = Array.isArray(cache?.modules) ? cache.modules : [];
+
+    if (!cache || !cache.raw) {
+        rawSection.style.display = 'none';
+        resultSection.style.display = 'none';
+        rawContent.textContent = '等待生成…';
+        resultContent.textContent = '';
+        badges.innerHTML = '';
+        if (fillBtn) fillBtn.style.display = isOpeningMode() ? 'none' : '';
+        return;
+    }
+
+    rawSection.style.display = '';
+    rawContent.textContent = cache.raw;
+    showAiResult(cache.raw, cache.modules || []);
+}
+
 function isOpeningMode() {
     return getActiveAiSubtab() === AI_SUBTAB_OPENING;
 }
@@ -409,6 +454,7 @@ function bindAiSubTabEvents() {
             syncAiTabUI();
             updateModulePreview();
             updatePromptPreview();
+            refreshAiCacheDisplay();
             scheduleCloudConfigSync();
         });
     });
@@ -454,6 +500,7 @@ function bindAiSubTabEvents() {
 
     updateAiInstructionsByActiveTab(true);
     syncAiTabUI();
+    refreshAiCacheDisplay();
 }
 
 function extractJsonFromText(rawText) {
@@ -648,6 +695,9 @@ async function generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawR
 }
 
 function processAiResult(raw, modules) {
+    const tabKey = getActiveAiSubtab();
+    saveCurrentCharAiCache(tabKey, buildAiCachePayload(raw, modules));
+    AppState.aiLastModules = Array.isArray(modules) ? modules : [];
     if (isOpeningMode()) {
         AppState.aiLastJson = null;
         showAiResult(raw, []);
@@ -679,7 +729,8 @@ function showAiResult(raw, modules) {
         ? modules.map(m => `<span class="ai-fill-badge">${MODULE_LABELS[m] || m}</span>`).join('')
         : (isOpeningMode() ? '<span class="ai-fill-badge">开场白</span>' : '');
     document.getElementById('aiRawResult').textContent = raw;
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const shouldHideResult = !isOpeningMode() && !(modules || []).length && !AppState.aiLastJson && !String(raw || '').trim();
+    if (shouldHideResult) section.style.display = 'none';
 }
 
 function fillFormFromAI() {

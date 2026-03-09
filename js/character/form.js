@@ -10,16 +10,58 @@ function getCurrentId() { return localStorage.getItem(LS_CURRENT) || null; }
 function setCurrentId(id) { localStorage.setItem(LS_CURRENT, id); }
 function generateId() { return 'char_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
 
+function ensureCharShape(charObj, fallbackName = '未命名角色') {
+    const safeChar = (charObj && typeof charObj === 'object') ? charObj : {};
+    if (!safeChar.data || typeof safeChar.data !== 'object') safeChar.data = {};
+    if (!safeChar.aiCache || typeof safeChar.aiCache !== 'object') safeChar.aiCache = {};
+    if (!safeChar.name) safeChar.name = fallbackName;
+    return safeChar;
+}
+
+function getCurrentCharObject() {
+    const id = getCurrentId();
+    if (!id) return null;
+    const chars = getChars();
+    if (!chars[id]) return null;
+    return ensureCharShape(chars[id]);
+}
+
+function getCurrentCharAiCache(tabKey = AppState.aiActiveSubtab || AI_SUBTAB_PERSONA_CARD) {
+    const charObj = getCurrentCharObject();
+    if (!charObj) return null;
+    return charObj.aiCache?.[tabKey] || null;
+}
+
+function saveCurrentCharAiCache(tabKey, payload) {
+    const id = getCurrentId();
+    if (!id || !tabKey) return;
+    const chars = getChars();
+    if (!chars[id]) return;
+    const charObj = ensureCharShape(chars[id]);
+    if (!payload || (typeof payload === 'object' && !String(payload.raw || '').trim())) {
+        delete charObj.aiCache[tabKey];
+    } else {
+        charObj.aiCache[tabKey] = payload;
+    }
+    chars[id] = charObj;
+    saveChars(chars);
+    scheduleCloudConfigSync();
+}
+
 function initCharSystem() {
     let chars = getChars();
     let currentId = getCurrentId();
     if (Object.keys(chars).length === 0) {
         const id = generateId();
-        chars[id] = { name: '角色一', data: {} };
+        chars[id] = ensureCharShape({ name: '角色一', data: {}, aiCache: {} }, '角色一');
         saveChars(chars);
         currentId = id;
         setCurrentId(id);
     }
+    Object.entries(chars).forEach(([id, charObj]) => {
+        chars[id] = ensureCharShape(charObj, charObj?.name || '未命名角色');
+    });
+    saveChars(chars);
     if (!chars[currentId]) {
         currentId = Object.keys(chars)[0];
         setCurrentId(currentId);
@@ -55,7 +97,7 @@ function newCharacter() {
     if (oldId) saveCurrentCharData(oldId);
     const chars = getChars();
     const id = generateId();
-    chars[id] = { name: name.trim(), data: {} };
+    chars[id] = ensureCharShape({ name: name.trim(), data: {}, aiCache: {} }, name.trim());
     saveChars(chars);
     setCurrentId(id);
     renderCharSelect(chars, id);
@@ -176,14 +218,20 @@ function saveCurrentCharData(id) {
     if (!id) return;
     const chars = getChars();
     if (!chars[id]) return;
+    chars[id] = ensureCharShape(chars[id], chars[id]?.name || '未命名角色');
     chars[id].data = serializeForm();
     saveChars(chars);
 }
 
 function loadCharacter(id) {
     const chars = getChars();
+    if (chars[id]) {
+        chars[id] = ensureCharShape(chars[id], chars[id]?.name || '未命名角色');
+        saveChars(chars);
+    }
     const charData = chars[id]?.data || {};
     deserializeForm(charData);
+    if (typeof refreshAiCacheDisplay === 'function') refreshAiCacheDisplay();
     setSaveStatus('saved');
 }
 

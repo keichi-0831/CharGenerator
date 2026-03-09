@@ -332,8 +332,14 @@ async function saveUploadForCurrentId() {
 }
 
 function normalizeCloudChar(charId, charData) {
-    if (charData && typeof charData === 'object' && 'name' in charData && 'data' in charData) return charData;
-    return { name: `云端角色-${String(charId).slice(-4)}`, data: (charData && typeof charData === 'object') ? charData : {} };
+    if (charData && typeof charData === 'object' && 'name' in charData && 'data' in charData) {
+        return ensureCharShape(charData, charData.name || `云端角色-${String(charId).slice(-4)}`);
+    }
+    return ensureCharShape({
+        name: `云端角色-${String(charId).slice(-4)}`,
+        data: (charData && typeof charData === 'object') ? charData : {},
+        aiCache: {}
+    }, `云端角色-${String(charId).slice(-4)}`);
 }
 
 async function pullCloudCharacters(overwriteLocal = false) {

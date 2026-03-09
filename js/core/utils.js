@@ -15,3 +15,10 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 }
+
+function forceRefreshApp() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('_fr', String(Date.now()));
+    showToast('🔄 正在强制刷新到最新版本…');
+    window.location.replace(url.toString());
+}
