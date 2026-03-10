@@ -205,7 +205,49 @@
             font-weight: bold;
         }
 
-        /* ===== Tabs ===== */
+        /* ===== Top Level Tabs ===== */
+        .top-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #f1f3f5;
+            padding-bottom: 12px;
+        }
+
+        .top-tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            font-size: 1.05rem;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -14px; /* overlap border */
+        }
+
+        .top-tab-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .top-tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .top-tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .top-tab-content.active {
+            display: block;
+        }
+
+        /* ===== Sub Tabs ===== */
         .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }
         .tab-btn {
             background: transparent;

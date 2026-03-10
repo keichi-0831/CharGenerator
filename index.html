@@ -60,18 +60,11 @@
     </div>
 
     <!-- Tabs -->
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="basic">基础信息</button>
-        <button class="tab-btn" data-tab="background">背景故事</button>
-        <button class="tab-btn" data-tab="appearance">外貌穿着</button>
-        <button class="tab-btn" data-tab="personality">性格特质</button>
-        <button class="tab-btn" data-tab="user-relation">💕 {{user}}相关</button>
-        <button class="tab-btn" data-tab="behavior">行为习惯</button>
-        <button class="tab-btn" data-tab="speech">说话风格</button>
-        <button class="tab-btn" data-tab="extra">额外补充</button>
-        <button class="tab-btn" data-tab="nsfw">🔞 NSFW</button>
-        <button class="tab-btn" data-tab="inspo">✨ 灵感池</button>
-        <button class="tab-btn" data-tab="ai">🤖 AI 辅助</button>
+    <div class="top-tabs tabs">
+        <button class="top-tab-btn active" data-tab="char-card">📄 人设卡</button>
+        <button class="top-tab-btn" data-tab="world-book">🌍 世界书</button>
+        <button class="top-tab-btn" data-tab="inspo">✨ 灵感池</button>
+        <button class="top-tab-btn" data-tab="ai">🤖 AI 辅助</button>
     </div>
 
     <div class="current-inspo-bar" id="currentInspoBar">
@@ -82,550 +75,600 @@
     </div>
 
     <form id="characterForm">
-        <!-- 基础信息 -->
-        <div class="tab-content active" id="tab-basic">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">👤</div>
-                    <h2>基础信息</h2>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>角色名 (英文/拼音)</label>
-                        <input type="text" id="char_name">
-                    </div>
-                    <div class="form-group">
-                        <label>中文名</label>
-                        <input type="text" id="chinese_name">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>昵称/外号</label>
-                    <input type="text" id="nickname">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>年龄</label>
-                        <input type="text" id="age">
-                    </div>
-                    <div class="form-group">
-                        <label>生日</label>
-                        <input type="text" id="birthday_date" placeholder="日期 (如: 6.15)">
-                    </div>
-                    <div class="form-group">
-                        <label>星座</label>
-                        <input type="text" id="birthday_zodiac" placeholder="星座">
-                    </div>
-                    <div class="form-group">
-                        <label>性别</label>
-                        <select id="gender">
-                            <option value="">-- 选择 --</option>
-                            <option value="男">男</option>
-                            <option value="女">女</option>
-                            <option value="非二元">非二元</option>
-                            <option value="其他">其他</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>身高</label>
-                        <input type="text" id="height">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>身份标签</label>
-                    <div class="array-container" id="identity-container">
-                        <div class="array-item">
-                            <input type="text" class="identity-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('identity-container', 'identity-item')">+ 添加身份</button>
-                </div>
-                <div class="form-group">
-                    <label>人设类型 (Archetype)</label>
-                    <div class="array-container" id="archetype-container">
-                        <div class="array-item">
-                            <input type="text" class="archetype-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('archetype-container', 'archetype-item')">+ 添加类型</button>
-                </div>
-                <div class="form-group">
-                    <label>社会地位/外界评价</label>
-                    <div class="array-container" id="social-container">
-                        <div class="array-item">
-                            <input type="text" class="social-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('social-container', 'social-item')">+ 添加评价</button>
-                </div>
+        
+        <!-- ======================= -->
+        <!--  人设卡 (Char Card) 模块 -->
+        <!-- ======================= -->
+        <div id="tab-char-card" class="top-tab-content active">
+            <div class="sub-tabs tabs">
+                <button class="tab-btn active" data-tab="basic">基础信息</button>
+                <button class="tab-btn" data-tab="background">背景故事</button>
+                <button class="tab-btn" data-tab="appearance">外貌穿着</button>
+                <button class="tab-btn" data-tab="personality">性格特质</button>
+                <button class="tab-btn" data-tab="user-relation">💕 {{user}}相关</button>
+                <button class="tab-btn" data-tab="behavior">行为习惯</button>
+                <button class="tab-btn" data-tab="speech">说话风格</button>
+                <button class="tab-btn" data-tab="extra">额外补充</button>
+                <button class="tab-btn" data-tab="nsfw">🔞 NSFW</button>
             </div>
-        </div>
 
-        <!-- 背景故事 -->
-        <div class="tab-content" id="tab-background">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">📖</div>
-                    <h2>背景故事</h2>
-                </div>
-                <div class="subsection">
-                    <div class="subsection-header">
-                        <h3>童年</h3>
-                        <div class="age-input-group">( <input type="text" class="age-input" id="age_range_childhood" placeholder="如: 0-12岁"> )</div>
+            <!-- 基础信息 -->
+            <div class="tab-content active" id="tab-basic">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">👤</div>
+                        <h2>基础信息</h2>
                     </div>
-                    <div class="array-container" id="childhood-container">
-                        <div class="array-item">
-                            <textarea class="childhood-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>角色名 (英文/拼音)</label>
+                            <input type="text" id="char_name">
+                        </div>
+                        <div class="form-group">
+                            <label>中文名</label>
+                            <input type="text" id="chinese_name">
                         </div>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('childhood-container', 'childhood-item')">+ 添加经历</button>
-                </div>
-                <div class="subsection">
-                    <div class="subsection-header">
-                        <h3>少年</h3>
-                        <div class="age-input-group">( <input type="text" class="age-input" id="age_range_teenage" placeholder="如: 13-18岁"> )</div>
-                    </div>
-                    <div class="array-container" id="teenage-container">
-                        <div class="array-item">
-                            <textarea class="teenage-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('teenage-container', 'teenage-item')">+ 添加经历</button>
-                </div>
-                <div class="subsection">
-                    <div class="subsection-header">
-                        <h3>青年</h3>
-                        <div class="age-input-group">( <input type="text" class="age-input" id="age_range_youth" placeholder="如: 19-23岁"> )</div>
-                    </div>
-                    <div class="array-container" id="youth-container">
-                        <div class="array-item">
-                            <textarea class="youth-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('youth-container', 'youth-item')">+ 添加经历</button>
-                </div>
-                <div class="subsection">
-                    <div class="subsection-header">
-                        <h3>现状</h3>
-                        <div class="age-input-group">( <input type="text" class="age-input" id="age_range_current" placeholder="如: 24"> )</div>
-                    </div>
-                    <div class="array-container" id="current-container">
-                        <div class="array-item">
-                            <textarea class="current-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('current-container', 'current-item')">+ 添加描述</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 外貌穿着 -->
-        <div class="tab-content" id="tab-appearance">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">✨</div>
-                    <h2>外貌特征</h2>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>发型/发色</label><textarea id="hair"></textarea></div>
-                    <div class="form-group"><label>眼睛</label><textarea id="eyes"></textarea></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>皮肤</label><textarea id="skin"></textarea></div>
-                    <div class="form-group"><label>脸型/五官风格</label><textarea id="face_style"></textarea></div>
-                </div>
-                <div class="form-group">
-                    <label>体型/身材</label>
-                    <div class="array-container" id="build-container">
-                        <div class="array-item">
-                            <input type="text" class="build-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('build-container', 'build-item')">+ 添加描述</button>
-                </div>
-            </div>
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">👔</div>
-                    <h2>穿着风格</h2>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>正装</label><input type="text" id="attire_formal"></div>
-                    <div class="form-group"><label>商务休闲</label><input type="text" id="attire_business"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>日常便装</label><input type="text" id="attire_casual"></div>
-                    <div class="form-group"><label>居家穿着</label><input type="text" id="attire_home"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 性格特质 -->
-        <div class="tab-content" id="tab-personality">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">🧠</div>
-                    <h2>性格特质</h2>
-                </div>
-                <div class="form-group">
-                    <label>核心性格</label>
-                    <div class="array-container" id="core-traits-container">
-                        <div class="array-item">
-                            <input type="text" class="core-traits-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('core-traits-container', 'core-traits-item')">+ 添加特质</button>
-                </div>
-                <div class="form-group">
-                    <label>恋爱中的性格</label>
-                    <div class="array-container" id="romantic-traits-container">
-                        <div class="array-item">
-                            <input type="text" class="romantic-traits-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('romantic-traits-container', 'romantic-traits-item')">+ 添加特质</button>
-                </div>
-                <div class="form-group">
-                    <label>弱点/缺陷</label>
-                    <div class="array-container" id="weakness-container">
-                        <div class="array-item">
-                            <input type="text" class="weakness-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('weakness-container', 'weakness-item')">+ 添加弱点</button>
-                </div>
-                <div class="form-row">
                     <div class="form-group">
-                        <label>喜欢的事物</label>
-                        <div class="array-container" id="likes-container">
+                        <label>昵称/外号</label>
+                        <input type="text" id="nickname">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>年龄</label>
+                            <input type="text" id="age">
+                        </div>
+                        <div class="form-group">
+                            <label>生日</label>
+                            <input type="text" id="birthday_date" placeholder="日期 (如: 6.15)">
+                        </div>
+                        <div class="form-group">
+                            <label>星座</label>
+                            <input type="text" id="birthday_zodiac" placeholder="星座">
+                        </div>
+                        <div class="form-group">
+                            <label>性别</label>
+                            <select id="gender">
+                                <option value="">-- 选择 --</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                                <option value="非二元">非二元</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>身高</label>
+                            <input type="text" id="height">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>身份标签</label>
+                        <div class="array-container" id="identity-container">
                             <div class="array-item">
-                                <input type="text" class="likes-item">
+                                <input type="text" class="identity-item">
                                 <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-add" onclick="addArrayItem('likes-container', 'likes-item')">+ 添加</button>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('identity-container', 'identity-item')">+ 添加身份</button>
                     </div>
                     <div class="form-group">
-                        <label>讨厌的事物</label>
-                        <div class="array-container" id="dislikes-container">
+                        <label>人设类型 (Archetype)</label>
+                        <div class="array-container" id="archetype-container">
                             <div class="array-item">
-                                <input type="text" class="dislikes-item">
+                                <input type="text" class="archetype-item">
                                 <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-add" onclick="addArrayItem('dislikes-container', 'dislikes-item')">+ 添加</button>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('archetype-container', 'archetype-item')">+ 添加类型</button>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>人生目标</label>
-                    <div class="array-container" id="goals-container">
-                        <div class="array-item">
-                            <input type="text" class="goals-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                    <div class="form-group">
+                        <label>社会地位/外界评价</label>
+                        <div class="array-container" id="social-container">
+                            <div class="array-item">
+                                <input type="text" class="social-item">
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
                         </div>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('social-container', 'social-item')">+ 添加评价</button>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('goals-container', 'goals-item')">+ 添加目标</button>
                 </div>
             </div>
-        </div>
 
-        <!-- {{user}} 相关 -->
-        <div class="tab-content" id="tab-user-relation">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">💕</div>
-                    <h2>{{user}} 相关信息</h2>
-                </div>
-                <div class="form-group">
-                    <label>与{{user}}的过往/重要回忆</label>
-                    <div class="array-container" id="past_events-container">
-                        <div class="array-item">
-                            <textarea class="past_events-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
+            <!-- 背景故事 -->
+            <div class="tab-content" id="tab-background">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">📖</div>
+                        <h2>背景故事</h2>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('past_events-container', 'past_events-item')">+ 添加事件</button>
-                </div>
-                <div class="form-group">
-                    <label>如何看待{{user}} / 印象</label>
-                    <div class="array-container" id="impression-container">
-                        <div class="array-item">
-                            <textarea class="impression-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h3>童年</h3>
+                            <div class="age-input-group">( <input type="text" class="age-input" id="age_range_childhood" placeholder="如: 0-12岁"> )</div>
                         </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('impression-container', 'impression-item')">+ 添加描述</button>
-                </div>
-                <div class="form-group">
-                    <label>关系补充说明</label>
-                    <div class="array-container" id="relation_notes-container">
-                        <div class="array-item">
-                            <textarea class="relation_notes-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                        <div class="array-container" id="childhood-container">
+                            <div class="array-item">
+                                <textarea class="childhood-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
                         </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('childhood-container', 'childhood-item')">+ 添加经历</button>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('relation_notes-container', 'relation_notes-item')">+ 添加说明</button>
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h3>少年</h3>
+                            <div class="age-input-group">( <input type="text" class="age-input" id="age_range_teenage" placeholder="如: 13-18岁"> )</div>
+                        </div>
+                        <div class="array-container" id="teenage-container">
+                            <div class="array-item">
+                                <textarea class="teenage-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('teenage-container', 'teenage-item')">+ 添加经历</button>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h3>青年</h3>
+                            <div class="age-input-group">( <input type="text" class="age-input" id="age_range_youth" placeholder="如: 19-23岁"> )</div>
+                        </div>
+                        <div class="array-container" id="youth-container">
+                            <div class="array-item">
+                                <textarea class="youth-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('youth-container', 'youth-item')">+ 添加经历</button>
+                    </div>
+                    <div class="subsection">
+                        <div class="subsection-header">
+                            <h3>现状</h3>
+                            <div class="age-input-group">( <input type="text" class="age-input" id="age_range_current" placeholder="如: 24"> )</div>
+                        </div>
+                        <div class="array-container" id="current-container">
+                            <div class="array-item">
+                                <textarea class="current-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('current-container', 'current-item')">+ 添加描述</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 行为习惯 -->
-        <div class="tab-content" id="tab-behavior">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">🎯</div>
-                    <h2>行为习惯</h2>
-                </div>
-                <div class="form-group">
-                    <label>生活习惯</label>
-                    <div class="array-container" id="lifestyle-container">
-                        <div class="array-item">
-                            <textarea class="lifestyle-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
+            <!-- 外貌穿着 -->
+            <div class="tab-content" id="tab-appearance">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">✨</div>
+                        <h2>外貌特征</h2>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('lifestyle-container', 'lifestyle-item')">+ 添加习惯</button>
-                </div>
-                <div class="form-group">
-                    <label>工作习惯</label>
-                    <div class="array-container" id="work-container">
-                        <div class="array-item">
-                            <textarea class="work-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>发型/发色</label><textarea id="hair"></textarea></div>
+                        <div class="form-group"><label>眼睛</label><textarea id="eyes"></textarea></div>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('work-container', 'work-item')">+ 添加习惯</button>
-                </div>
-                <div class="subsection">
-                    <h3>情绪表现</h3>
-                    <div class="form-group"><label>生气时</label><textarea id="emotional_angry"></textarea></div>
-                    <div class="form-group"><label>开心时</label><textarea id="emotional_happy"></textarea></div>
-                    <div class="form-group"><label>难过时</label><textarea id="emotional_sad"></textarea></div>
-                </div>
-                <div class="form-group">
-                    <label>关系边界 (对他人与{{user}}的区别)</label>
-                    <div class="array-container" id="boundaries-container">
-                        <div class="array-item">
-                            <textarea class="boundaries-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>皮肤</label><textarea id="skin"></textarea></div>
+                        <div class="form-group"><label>脸型/五官风格</label><textarea id="face_style"></textarea></div>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('boundaries-container', 'boundaries-item')">+ 添加边界</button>
-                </div>
-            </div>
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">🛠️</div>
-                    <h2>技能特长</h2>
-                </div>
-                <div class="form-row">
                     <div class="form-group">
-                        <label>工作技能</label>
-                        <div class="array-container" id="work-skills-container">
+                        <label>体型/身材</label>
+                        <div class="array-container" id="build-container">
                             <div class="array-item">
-                                <input type="text" class="work-skills-item">
+                                <input type="text" class="build-item">
                                 <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-add" onclick="addArrayItem('work-skills-container', 'work-skills-item')">+ 添加</button>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('build-container', 'build-item')">+ 添加描述</button>
                     </div>
-                    <div class="form-group">
-                        <label>生活技能</label>
-                        <div class="array-container" id="life-skills-container">
-                            <div class="array-item">
-                                <input type="text" class="life-skills-item">
-                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-add" onclick="addArrayItem('life-skills-container', 'life-skills-item')">+ 添加</button>
+                </div>
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">👔</div>
+                        <h2>穿着风格</h2>
                     </div>
-                    <div class="form-group">
-                        <label>兴趣爱好技能</label>
-                        <div class="array-container" id="hobby-skills-container">
-                            <div class="array-item">
-                                <input type="text" class="hobby-skills-item">
-                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-add" onclick="addArrayItem('hobby-skills-container', 'hobby-skills-item')">+ 添加</button>
+                    <div class="form-row">
+                        <div class="form-group"><label>正装</label><input type="text" id="attire_formal"></div>
+                        <div class="form-group"><label>商务休闲</label><input type="text" id="attire_business"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>日常便装</label><input type="text" id="attire_casual"></div>
+                        <div class="form-group"><label>居家穿着</label><input type="text" id="attire_home"></div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 说话风格 -->
-        <div class="tab-content" id="tab-speech">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">💬</div>
-                    <h2>说话风格</h2>
-                </div>
-                <div class="form-group"><label>与{{user}}说话时</label><textarea id="speech_with_user"></textarea></div>
-                <div class="form-group"><label>风格说明/切换逻辑</label><textarea id="speech_reasoning"></textarea></div>
-                <div class="form-group"><label>口音/方言特点</label><input type="text" id="speech_accent"></div>
-                <div class="form-group"><label>网络/文字聊天风格</label><textarea id="speech_online"></textarea></div>
-            </div>
-        </div>
-
-        <!-- 额外补充 -->
-        <div class="tab-content" id="tab-extra">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">💫</div>
-                    <h2>额外补充</h2>
-                </div>
-                <div class="form-group"><label>补充说明 (角色简介/作者注)</label><textarea id="additional_notes" rows="4"></textarea></div>
-                <div class="form-group">
-                    <label>口头禅/习惯用语</label>
-                    <div class="array-container" id="catchphrase-container">
-                        <div class="array-item">
-                            <input type="text" class="catchphrase-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
+            <!-- 性格特质 -->
+            <div class="tab-content" id="tab-personality">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">🧠</div>
+                        <h2>性格特质</h2>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('catchphrase-container', 'catchphrase-item')">+ 添加</button>
-                </div>
-                <div class="form-group">
-                    <label>习惯性小动作</label>
-                    <div class="array-container" id="mannerisms-container">
-                        <div class="array-item">
-                            <input type="text" class="mannerisms-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('mannerisms-container', 'mannerisms-item')">+ 添加</button>
-                </div>
-                <div class="form-group">
-                    <label>心理创伤/阴影</label>
-                    <div class="array-container" id="trauma-container">
-                        <div class="array-item">
-                            <textarea class="trauma-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('trauma-container', 'trauma-item')">+ 添加</button>
-                </div>
-                <div class="form-group">
-                    <label>核心价值观/信念</label>
-                    <div class="array-container" id="values-container">
-                        <div class="array-item">
-                            <input type="text" class="values-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('values-container', 'values-item')">+ 添加</button>
-                </div>
-                <div class="form-group">
-                    <label>内心矛盾/冲突</label>
-                    <div class="array-container" id="conflicts-container">
-                        <div class="array-item">
-                            <textarea class="conflicts-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('conflicts-container', 'conflicts-item')">+ 添加</button>
-                </div>
-                <div class="form-group">
-                    <label>不为人知的秘密</label>
-                    <div class="array-container" id="secrets-container">
-                        <div class="array-item">
-                            <textarea class="secrets-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('secrets-container', 'secrets-item')">+ 添加</button>
-                </div>
-                <div class="form-group">
-                    <label>重要人际关系</label>
-                    <div class="array-container" id="relationships-container">
-                        <div class="array-item">
-                            <textarea class="relationships-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('relationships-container', 'relationships-item')">+ 添加</button>
-                </div>
-                <div class="form-group">
-                    <label>决定性时刻/关键记忆</label>
-                    <div class="array-container" id="defining-moments-container">
-                        <div class="array-item">
-                            <textarea class="defining-moments-item"></textarea>
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-add" onclick="addTextareaItem('defining-moments-container', 'defining-moments-item')">+ 添加</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- NSFW -->
-        <div class="tab-content" id="tab-nsfw">
-            <div class="card-section">
-                <div class="section-header">
-                    <div class="section-icon">🔞</div>
-                    <h2>NSFW 信息</h2>
-                </div>
-                <div class="subsection">
-                    <h3>性相关特征</h3>
-                    <div class="form-group"><label>性经验</label><textarea id="nsfw_experiences"></textarea></div>
-                    <div class="form-group"><label>性取向</label><input type="text" id="nsfw_orientation"></div>
                     <div class="form-group">
-                        <label>性爱角色/定位</label>
-                        <div class="array-container" id="nsfw-role-container">
+                        <label>核心性格</label>
+                        <div class="array-container" id="core-traits-container">
                             <div class="array-item">
-                                <textarea class="nsfw-role-item"></textarea>
+                                <input type="text" class="core-traits-item">
                                 <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-add" onclick="addTextareaItem('nsfw-role-container', 'nsfw-role-item')">+ 添加</button>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('core-traits-container', 'core-traits-item')">+ 添加特质</button>
                     </div>
                     <div class="form-group">
-                        <label>性爱习惯</label>
-                        <div class="array-container" id="nsfw-habits-container">
+                        <label>恋爱中的性格</label>
+                        <div class="array-container" id="romantic-traits-container">
                             <div class="array-item">
-                                <textarea class="nsfw-habits-item"></textarea>
+                                <input type="text" class="romantic-traits-item">
                                 <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-add" onclick="addTextareaItem('nsfw-habits-container', 'nsfw-habits-item')">+ 添加</button>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('romantic-traits-container', 'romantic-traits-item')">+ 添加特质</button>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>性癖/Kinks</label>
-                    <div class="array-container" id="kinks-container">
-                        <div class="array-item">
-                            <input type="text" class="kinks-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                    <div class="form-group">
+                        <label>弱点/缺陷</label>
+                        <div class="array-container" id="weakness-container">
+                            <div class="array-item">
+                                <input type="text" class="weakness-item">
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('weakness-container', 'weakness-item')">+ 添加弱点</button>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>喜欢的事物</label>
+                            <div class="array-container" id="likes-container">
+                                <div class="array-item">
+                                    <input type="text" class="likes-item">
+                                    <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-add" onclick="addArrayItem('likes-container', 'likes-item')">+ 添加</button>
+                        </div>
+                        <div class="form-group">
+                            <label>讨厌的事物</label>
+                            <div class="array-container" id="dislikes-container">
+                                <div class="array-item">
+                                    <input type="text" class="dislikes-item">
+                                    <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-add" onclick="addArrayItem('dislikes-container', 'dislikes-item')">+ 添加</button>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('kinks-container', 'kinks-item')">+ 添加</button>
+                    <div class="form-group">
+                        <label>人生目标</label>
+                        <div class="array-container" id="goals-container">
+                            <div class="array-item">
+                                <input type="text" class="goals-item">
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('goals-container', 'goals-item')">+ 添加目标</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>雷区/禁止事项 (Limits)</label>
-                    <div class="array-container" id="limits-container">
-                        <div class="array-item">
-                            <input type="text" class="limits-item">
-                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+            </div>
+
+            <!-- {{user}} 相关 -->
+            <div class="tab-content" id="tab-user-relation">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">💕</div>
+                        <h2>{{user}} 相关信息</h2>
+                    </div>
+                    <div class="form-group">
+                        <label>与{{user}}的过往/重要回忆</label>
+                        <div class="array-container" id="past_events-container">
+                            <div class="array-item">
+                                <textarea class="past_events-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('past_events-container', 'past_events-item')">+ 添加事件</button>
+                    </div>
+                    <div class="form-group">
+                        <label>如何看待{{user}} / 印象</label>
+                        <div class="array-container" id="impression-container">
+                            <div class="array-item">
+                                <textarea class="impression-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('impression-container', 'impression-item')">+ 添加描述</button>
+                    </div>
+                    <div class="form-group">
+                        <label>关系补充说明</label>
+                        <div class="array-container" id="relation_notes-container">
+                            <div class="array-item">
+                                <textarea class="relation_notes-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('relation_notes-container', 'relation_notes-item')">+ 添加说明</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 行为习惯 -->
+            <div class="tab-content" id="tab-behavior">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">🎯</div>
+                        <h2>行为习惯</h2>
+                    </div>
+                    <div class="form-group">
+                        <label>生活习惯</label>
+                        <div class="array-container" id="lifestyle-container">
+                            <div class="array-item">
+                                <textarea class="lifestyle-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('lifestyle-container', 'lifestyle-item')">+ 添加习惯</button>
+                    </div>
+                    <div class="form-group">
+                        <label>工作习惯</label>
+                        <div class="array-container" id="work-container">
+                            <div class="array-item">
+                                <textarea class="work-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('work-container', 'work-item')">+ 添加习惯</button>
+                    </div>
+                    <div class="subsection">
+                        <h3>情绪表现</h3>
+                        <div class="form-group"><label>生气时</label><textarea id="emotional_angry"></textarea></div>
+                        <div class="form-group"><label>开心时</label><textarea id="emotional_happy"></textarea></div>
+                        <div class="form-group"><label>难过时</label><textarea id="emotional_sad"></textarea></div>
+                    </div>
+                    <div class="form-group">
+                        <label>关系边界 (对他人与{{user}}的区别)</label>
+                        <div class="array-container" id="boundaries-container">
+                            <div class="array-item">
+                                <textarea class="boundaries-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('boundaries-container', 'boundaries-item')">+ 添加边界</button>
+                    </div>
+                </div>
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">🛠️</div>
+                        <h2>技能特长</h2>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>工作技能</label>
+                            <div class="array-container" id="work-skills-container">
+                                <div class="array-item">
+                                    <input type="text" class="work-skills-item">
+                                    <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-add" onclick="addArrayItem('work-skills-container', 'work-skills-item')">+ 添加</button>
+                        </div>
+                        <div class="form-group">
+                            <label>生活技能</label>
+                            <div class="array-container" id="life-skills-container">
+                                <div class="array-item">
+                                    <input type="text" class="life-skills-item">
+                                    <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-add" onclick="addArrayItem('life-skills-container', 'life-skills-item')">+ 添加</button>
+                        </div>
+                        <div class="form-group">
+                            <label>兴趣爱好技能</label>
+                            <div class="array-container" id="hobby-skills-container">
+                                <div class="array-item">
+                                    <input type="text" class="hobby-skills-item">
+                                    <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-add" onclick="addArrayItem('hobby-skills-container', 'hobby-skills-item')">+ 添加</button>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-add" onclick="addArrayItem('limits-container', 'limits-item')">+ 添加</button>
+                </div>
+            </div>
+
+            <!-- 说话风格 -->
+            <div class="tab-content" id="tab-speech">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">💬</div>
+                        <h2>说话风格</h2>
+                    </div>
+                    <div class="form-group"><label>与{{user}}说话时</label><textarea id="speech_with_user"></textarea></div>
+                    <div class="form-group"><label>风格说明/切换逻辑</label><textarea id="speech_reasoning"></textarea></div>
+                    <div class="form-group"><label>口音/方言特点</label><input type="text" id="speech_accent"></div>
+                    <div class="form-group"><label>网络/文字聊天风格</label><textarea id="speech_online"></textarea></div>
+                </div>
+            </div>
+
+            <!-- 额外补充 -->
+            <div class="tab-content" id="tab-extra">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">💫</div>
+                        <h2>额外补充</h2>
+                    </div>
+                    <div class="form-group"><label>补充说明 (角色简介/作者注)</label><textarea id="additional_notes" rows="4"></textarea></div>
+                    <div class="form-group">
+                        <label>口头禅/习惯用语</label>
+                        <div class="array-container" id="catchphrase-container">
+                            <div class="array-item">
+                                <input type="text" class="catchphrase-item">
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('catchphrase-container', 'catchphrase-item')">+ 添加</button>
+                    </div>
+                    <div class="form-group">
+                        <label>习惯性小动作</label>
+                        <div class="array-container" id="mannerisms-container">
+                            <div class="array-item">
+                                <input type="text" class="mannerisms-item">
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('mannerisms-container', 'mannerisms-item')">+ 添加</button>
+                    </div>
+                    <div class="form-group">
+                        <label>心理创伤/阴影</label>
+                        <div class="array-container" id="trauma-container">
+                            <div class="array-item">
+                                <textarea class="trauma-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('trauma-container', 'trauma-item')">+ 添加</button>
+                    </div>
+                    <div class="form-group">
+                        <label>核心价值观/信念</label>
+                        <div class="array-container" id="values-container">
+                            <div class="array-item">
+                                <input type="text" class="values-item">
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('values-container', 'values-item')">+ 添加</button>
+                    </div>
+                    <div class="form-group">
+                        <label>内心矛盾/冲突</label>
+                        <div class="array-container" id="conflicts-container">
+                            <div class="array-item">
+                                <textarea class="conflicts-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('conflicts-container', 'conflicts-item')">+ 添加</button>
+                    </div>
+                    <div class="form-group">
+                        <label>不为人知的秘密</label>
+                        <div class="array-container" id="secrets-container">
+                            <div class="array-item">
+                                <textarea class="secrets-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('secrets-container', 'secrets-item')">+ 添加</button>
+                    </div>
+                    <div class="form-group">
+                        <label>重要人际关系</label>
+                        <div class="array-container" id="relationships-container">
+                            <div class="array-item">
+                                <textarea class="relationships-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('relationships-container', 'relationships-item')">+ 添加</button>
+                    </div>
+                    <div class="form-group">
+                        <label>决定性时刻/关键记忆</label>
+                        <div class="array-container" id="defining-moments-container">
+                            <div class="array-item">
+                                <textarea class="defining-moments-item"></textarea>
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addTextareaItem('defining-moments-container', 'defining-moments-item')">+ 添加</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NSFW -->
+            <div class="tab-content" id="tab-nsfw">
+                <div class="card-section">
+                    <div class="section-header">
+                        <div class="section-icon">🔞</div>
+                        <h2>NSFW 信息</h2>
+                    </div>
+                    <div class="subsection">
+                        <h3>性相关特征</h3>
+                        <div class="form-group"><label>性经验</label><textarea id="nsfw_experiences"></textarea></div>
+                        <div class="form-group"><label>性取向</label><input type="text" id="nsfw_orientation"></div>
+                        <div class="form-group">
+                            <label>性爱角色/定位</label>
+                            <div class="array-container" id="nsfw-role-container">
+                                <div class="array-item">
+                                    <textarea class="nsfw-role-item"></textarea>
+                                    <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-add" onclick="addTextareaItem('nsfw-role-container', 'nsfw-role-item')">+ 添加</button>
+                        </div>
+                        <div class="form-group">
+                            <label>性爱习惯</label>
+                            <div class="array-container" id="nsfw-habits-container">
+                                <div class="array-item">
+                                    <textarea class="nsfw-habits-item"></textarea>
+                                    <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-add" onclick="addTextareaItem('nsfw-habits-container', 'nsfw-habits-item')">+ 添加</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>性癖/Kinks</label>
+                        <div class="array-container" id="kinks-container">
+                            <div class="array-item">
+                                <input type="text" class="kinks-item">
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('kinks-container', 'kinks-item')">+ 添加</button>
+                    </div>
+                    <div class="form-group">
+                        <label>雷区/禁止事项 (Limits)</label>
+                        <div class="array-container" id="limits-container">
+                            <div class="array-item">
+                                <input type="text" class="limits-item">
+                                <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-add" onclick="addArrayItem('limits-container', 'limits-item')">+ 添加</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 导出区域 -->
+            <div class="export-section">
+                <div class="export-header">
+                    <h3>导出选项</h3>
+                    <p>自动整合所有内容，空字段跳过</p>
+                </div>
+                <div class="export-buttons">
+                    <button type="button" class="btn btn-danger" onclick="clearForm()">🗑️ 清空</button>
+                    <button type="button" class="btn btn-normal" onclick="previewYaml()">👁️ 预览</button>
+                    <button type="button" class="btn btn-export-main" onclick="exportYaml()">📥 复制导出</button>
+                </div>
+            </div>
+            
+        </div> <!-- End of tab-char-card -->
+
+        <!-- ======================= -->
+        <!--  世界书 (World Book) 模块 -->
+        <!-- ======================= -->
+        <div id="tab-world-book" class="top-tab-content">
+            <div class="card-section">
+                <div class="section-header">
+                    <div class="section-icon">🌍</div>
+                    <h2>世界书</h2>
+                </div>
+                <p style="padding: 12px 0; color: var(--text-sub); text-align: center;">世界书功能正在开发中……</p>
+                <div class="ai-empty-card" style="margin-top:12px;">
+                    <div class="ai-empty-card-icon">🧱</div>
+                    <h3>预留扩展入口</h3>
+                    <p>这里预留为后续「世界观 / 世界书」模块的功能区。当前版本仅作为导航占位，不参与任何数据读写，也不会影响其他模块的行为。</p>
                 </div>
             </div>
         </div>
 
         <!-- 灵感池 -->
-        <div class="tab-content" id="tab-inspo">
+        <div class="top-tab-content" id="tab-inspo">
             <div class="inspo-panel">
                 <div class="inspo-pool-box">
                     <h3>🌀 灵感词库</h3>
@@ -727,7 +770,7 @@
         </div>
 
         <!-- AI 辅助 -->
-        <div class="tab-content" id="tab-ai">
+        <div class="top-tab-content" id="tab-ai">
             <!-- API 配置 -->
             <div class="card-section">
                 <div class="section-header">
@@ -1083,18 +1126,6 @@
         </div>
     </form>
 
-    <!-- 导出区域 -->
-    <div class="export-section">
-        <div class="export-header">
-            <h3>导出选项</h3>
-            <p>自动整合所有内容，空字段跳过</p>
-        </div>
-        <div class="export-buttons">
-            <button type="button" class="btn btn-danger" onclick="clearForm()">🗑️ 清空</button>
-            <button type="button" class="btn btn-normal" onclick="previewYaml()">👁️ 预览</button>
-            <button type="button" class="btn btn-export-main" onclick="exportYaml()">📥 复制导出</button>
-        </div>
-    </div>
 </div>
 
 <!-- 预览弹窗 -->

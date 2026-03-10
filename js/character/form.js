@@ -168,6 +168,7 @@ function deserializeForm(data) {
             if (isTextarea) {
                 const ta = document.createElement('textarea');
                 ta.className = cls;
+                ta.name = cls;
                 ta.value = val;
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -180,6 +181,7 @@ function deserializeForm(data) {
                 const inp = document.createElement('input');
                 inp.type = 'text';
                 inp.className = cls;
+                inp.name = cls;
                 inp.value = val;
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -206,9 +208,9 @@ function clearFormFields() {
         const div = document.createElement('div');
         div.className = 'array-item';
         if (isTextarea) {
-            div.innerHTML = `<textarea class="${cls}"></textarea><button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>`;
+            div.innerHTML = `<textarea class="${cls}" name="${cls}"></textarea><button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>`;
         } else {
-            div.innerHTML = `<input type="text" class="${cls}"><button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>`;
+            div.innerHTML = `<input type="text" class="${cls}" name="${cls}"><button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>`;
         }
         container.appendChild(div);
     });
@@ -261,7 +263,7 @@ function addArrayItem(containerId, className) {
     const container = document.getElementById(containerId);
     const div = document.createElement('div');
     div.className = 'array-item';
-    div.innerHTML = `<input type="text" class="${className}"><button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>`;
+    div.innerHTML = `<input type="text" class="${className}" name="${className}"><button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>`;
     container.appendChild(div);
     div.querySelector('input').focus();
 }
@@ -270,7 +272,7 @@ function addTextareaItem(containerId, className) {
     const container = document.getElementById(containerId);
     const div = document.createElement('div');
     div.className = 'array-item';
-    div.innerHTML = `<textarea class="${className}"></textarea><button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>`;
+    div.innerHTML = `<textarea class="${className}" name="${className}"></textarea><button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>`;
     container.appendChild(div);
     div.querySelector('textarea').focus();
 }
@@ -286,6 +288,18 @@ function removeArrayItem(btn) {
 }
 
 function bindTabEvents() {
+    // 绑定顶级标签事件（人设卡 / 世界书 / 灵感池 / AI 辅助）
+    document.querySelectorAll('.top-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.top-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.top-tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            const target = document.getElementById('tab-' + btn.dataset.tab);
+            if (target) target.classList.add('active');
+        });
+    });
+
+    // 绑定子级标签事件（人设卡内部的基础信息 / 背景故事等）
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
