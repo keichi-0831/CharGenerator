@@ -54,7 +54,9 @@ function getCloudMetaConfigSnapshot() {
             activeSubtab: getActiveAiSubtab ? getActiveAiSubtab() : AI_SUBTAB_PERSONA_CARD,
             persona: getVal('aiPersona', ''),
             xpCore: getVal('aiXpCore', ''),
-            instructions: getVal('aiInstructions', ''),
+            instructionsChar: getVal('aiInstructionsChar', ''),
+            instructionsWorld: getVal('aiInstructionsWorld', ''),
+            instructionsOpening: getVal('aiInstructionsOpening', ''),
             openingWordCount: getVal('aiOpeningWordCount', '800-1000字'),
             sendTropeToAi: getChecked('sendTropeToAi', true),
             includeExistingContentToAi: getChecked('includeExistingContentToAi', true),
@@ -99,12 +101,14 @@ function applyCloudMetaConfig(cfg) {
             setVal('aiPersona', cfg.ai.persona);
             setVal('aiXpCore', cfg.ai.xpCore);
             setVal('aiTrope', cfg.ai.trope);
-            setVal('aiInstructions', cfg.ai.instructions);
+            setVal('aiInstructionsChar', cfg.ai.instructionsChar);
+            setVal('aiInstructionsWorld', cfg.ai.instructionsWorld);
+            setVal('aiInstructionsOpening', cfg.ai.instructionsOpening);
             setVal('aiOpeningWordCount', cfg.ai.openingWordCount);
             if (cfg.ai.instructionDrafts && typeof cfg.ai.instructionDrafts === 'object') {
                 AppState.aiInstructionDrafts = {
                     [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
-                    [AI_SUBTAB_WORLDVIEW]: '',
+                    [AI_SUBTAB_WORLDVIEW]: AI_WORLDVIEW_INSTRUCTIONS_DEFAULT,
                     [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT,
                     ...cfg.ai.instructionDrafts
                 };

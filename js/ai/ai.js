@@ -35,13 +35,10 @@ function collectAiUiState() {
     moduleGuides.opening_scene = getVal('guide_opening_scene', '');
 
     const instructionDrafts = {
-        [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
-        [AI_SUBTAB_WORLDVIEW]: '',
-        [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT,
-        ...(AppState.aiInstructionDrafts || {})
+        [AI_SUBTAB_PERSONA_CARD]: getVal('aiInstructionsChar', AppState.aiInstructionDrafts?.[AI_SUBTAB_PERSONA_CARD] || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT),
+        [AI_SUBTAB_WORLDVIEW]: getVal('aiInstructionsWorld', AppState.aiInstructionDrafts?.[AI_SUBTAB_WORLDVIEW] || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT),
+        [AI_SUBTAB_OPENING]: getVal('aiInstructionsOpening', AppState.aiInstructionDrafts?.[AI_SUBTAB_OPENING] || AI_OPENING_INSTRUCTIONS_DEFAULT)
     };
-    const currentTab = getActiveAiSubtab();
-    instructionDrafts[currentTab] = getVal('aiInstructions', instructionDrafts[currentTab] || '');
 
     return {
         persona: getVal('aiPersona', ''),
@@ -56,7 +53,11 @@ function collectAiUiState() {
         sendPersonalPronounsToAi: getChecked('sendPersonalPronounsToAi', false),
         charPronounMode: document.querySelector('input[name="charPronounMode"]:checked')?.value || 'third',
         userPronounMode: document.querySelector('input[name="userPronounMode"]:checked')?.value || 'second',
-        activeSubtab: currentTab,
+        // 这里原本使用了不存在的全局变量 currentTab，导致初始化/保存 UI 状态时报错
+        // 改为使用现有的 AI 子标签状态：如果 AppState.aiActiveSubtab 尚未初始化，则回退到默认值
+        activeSubtab: (typeof getActiveAiSubtab === 'function')
+            ? getActiveAiSubtab()
+            : (window.AppState?.aiActiveSubtab || AI_SUBTAB_PERSONA_CARD),
         moduleChecks,
         moduleGuides,
         instructionDrafts
@@ -115,13 +116,29 @@ function applyAiUiState(state) {
         });
     }
 
+    const draftsFromState = (state.instructionDrafts && typeof state.instructionDrafts === 'object')
+        ? state.instructionDrafts
+        : {};
     AppState.aiInstructionDrafts = {
-        [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
-        [AI_SUBTAB_WORLDVIEW]: '',
-        [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT,
-        ...(state.instructionDrafts || {})
+        [AI_SUBTAB_PERSONA_CARD]: draftsFromState[AI_SUBTAB_PERSONA_CARD]
+            || state.instructionsChar
+            || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
+        [AI_SUBTAB_WORLDVIEW]: draftsFromState[AI_SUBTAB_WORLDVIEW]
+            || state.instructionsWorld
+            || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT,
+        [AI_SUBTAB_OPENING]: draftsFromState[AI_SUBTAB_OPENING]
+            || state.instructionsOpening
+            || AI_OPENING_INSTRUCTIONS_DEFAULT
     };
     AppState.aiActiveSubtab = state.activeSubtab || AppState.aiActiveSubtab || AI_SUBTAB_PERSONA_CARD;
+
+    // 将指令草稿同步回各自独立的 textarea
+    const insCharEl = document.getElementById('aiInstructionsChar');
+    if (insCharEl) insCharEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_PERSONA_CARD] || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT;
+    const insWorldEl = document.getElementById('aiInstructionsWorld');
+    if (insWorldEl) insWorldEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_WORLDVIEW] || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT;
+    const insOpeningEl = document.getElementById('aiInstructionsOpening');
+    if (insOpeningEl) insOpeningEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_OPENING] || AI_OPENING_INSTRUCTIONS_DEFAULT;
 }
 
 function migrateOldAiConfig() {
@@ -442,20 +459,20 @@ function buildNamerPoolBlock() {
 }
 
 function updateAiInstructionsByActiveTab(force = false) {
-    const el = document.getElementById('aiInstructions');
-    if (!el) return;
-    const activeTab = getActiveAiSubtab();
-    const defaults = {
-        [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
-        [AI_SUBTAB_WORLDVIEW]: '',
-        [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT
+    const map = {
+        [AI_SUBTAB_PERSONA_CARD]: { id: 'aiInstructionsChar', def: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT },
+        [AI_SUBTAB_WORLDVIEW]: { id: 'aiInstructionsWorld', def: AI_WORLDVIEW_INSTRUCTIONS_DEFAULT },
+        [AI_SUBTAB_OPENING]: { id: 'aiInstructionsOpening', def: AI_OPENING_INSTRUCTIONS_DEFAULT }
     };
-    const currentDefault = defaults[activeTab] || '';
-    const draftValue = AppState.aiInstructionDrafts && AppState.aiInstructionDrafts[activeTab] !== undefined
-        ? AppState.aiInstructionDrafts[activeTab]
-        : undefined;
-    if (force) el.value = draftValue !== undefined ? draftValue : currentDefault;
-    else if (!el.value.trim()) el.value = draftValue !== undefined ? draftValue : currentDefault;
+    Object.entries(map).forEach(([tabKey, cfg]) => {
+        const el = document.getElementById(cfg.id);
+        if (!el) return;
+        const draftValue = AppState.aiInstructionDrafts && AppState.aiInstructionDrafts[tabKey] !== undefined
+            ? AppState.aiInstructionDrafts[tabKey]
+            : cfg.def;
+        if (force) el.value = draftValue || cfg.def;
+        else if (!el.value.trim()) el.value = draftValue || cfg.def;
+    });
 }
 
 function syncAiTabUI() {
@@ -475,14 +492,15 @@ function buildOpeningPreview() {
     const yamlCard = typeof generateYaml === 'function' ? (generateYaml() || '').trim() : '';
     const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
     const wordCount = document.getElementById('aiOpeningWordCount')?.value.trim() || '800-1000字';
-    const instructions = document.getElementById('aiInstructions')?.value.trim() || AI_OPENING_INSTRUCTIONS_DEFAULT;
+    const instructionsEl = document.getElementById('aiInstructionsOpening');
+    const instructions = instructionsEl?.value.trim() || AI_OPENING_INSTRUCTIONS_DEFAULT;
     const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
     const pronounsBlock = buildPersonalPronounsBlock();
     const userPortrayalBlock = buildOpeningUserPortrayalBlock();
     const yamlBlock = yamlCard
         ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
         : '';
-    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
 }
 
 function buildAiMessages() {
@@ -494,7 +512,18 @@ function buildAiMessages() {
     const modules = getSelectedModules();
     const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
     const wordCount = document.getElementById('aiOpeningWordCount')?.value.trim() || '800-1000字';
-    const instructions = document.getElementById('aiInstructions')?.value.trim() || (isOpeningMode() ? AI_OPENING_INSTRUCTIONS_DEFAULT : AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT);
+    const activeTab = getActiveAiSubtab();
+    let instructions = '';
+    if (activeTab === AI_SUBTAB_PERSONA_CARD) {
+        const el = document.getElementById('aiInstructionsChar');
+        instructions = el?.value.trim() || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT;
+    } else if (activeTab === AI_SUBTAB_WORLDVIEW) {
+        const el = document.getElementById('aiInstructionsWorld');
+        instructions = el?.value.trim() || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT;
+    } else if (activeTab === AI_SUBTAB_OPENING) {
+        const el = document.getElementById('aiInstructionsOpening');
+        instructions = el?.value.trim() || AI_OPENING_INSTRUCTIONS_DEFAULT;
+    }
 
     const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
     const systemMsg = `<persona>\n${persona}\n</persona>`;
@@ -507,7 +536,7 @@ function buildAiMessages() {
         const yamlBlock = yamlCard
             ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
             : '';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions>\n${instructions}\n</instructions>`;
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
     } else {
         const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
         const guideTexts = modules.map(m => {
@@ -523,7 +552,8 @@ function buildAiMessages() {
         const existingBlock = existingRef
             ? `<existing_filled_content>\n以下是表单里已经写好的内容，请优先参考并保持设定一致，在此基础上补全缺失内容：\n${existingRef}\n</existing_filled_content>\n\n`
             : '';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${namingRef}${existingBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<reply_json_schema>\n{\n${selectedSchema.join(',\n')}\n}\n</reply_json_schema>\n\n<instructions>\n${dynamicInstructions}\n</instructions>`;
+        const instructionsTag = (activeTab === AI_SUBTAB_WORLDVIEW) ? 'instructions_worldinfo' : 'instructions_char';
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${namingRef}${existingBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<reply_json_schema>\n{\n${selectedSchema.join(',\n')}\n}\n</reply_json_schema>\n\n<${instructionsTag}>\n${dynamicInstructions}\n</${instructionsTag}>`;
     }
 
     return { systemMsg, userMsg, modules };
@@ -621,9 +651,6 @@ function bindModuleCheckboxes() {
 function bindAiSubTabEvents() {
     document.querySelectorAll('.ai-subtab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const instructionsEl = document.getElementById('aiInstructions');
-            const prevTab = getActiveAiSubtab();
-            if (instructionsEl) AppState.aiInstructionDrafts[prevTab] = instructionsEl.value;
             document.querySelectorAll('.ai-subtab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.ai-subtab-panel').forEach(panel => panel.classList.remove('active'));
             btn.classList.add('active');
@@ -631,7 +658,6 @@ function bindAiSubTabEvents() {
             if (panel) panel.classList.add('active');
             AppState.aiActiveSubtab = btn.dataset.aiTab;
             persistAiUiState();
-            updateAiInstructionsByActiveTab();
             syncAiTabUI();
             updateModulePreview();
             updatePromptPreview();
@@ -640,16 +666,22 @@ function bindAiSubTabEvents() {
         });
     });
 
-    const instructionsEl = document.getElementById('aiInstructions');
-    if (instructionsEl) {
-        instructionsEl.addEventListener('input', () => {
-            AppState.aiInstructionDrafts[getActiveAiSubtab()] = instructionsEl.value;
+    const instructionsMap = [
+        [AI_SUBTAB_PERSONA_CARD, 'aiInstructionsChar'],
+        [AI_SUBTAB_WORLDVIEW, 'aiInstructionsWorld'],
+        [AI_SUBTAB_OPENING, 'aiInstructionsOpening']
+    ];
+    instructionsMap.forEach(([tabKey, elId]) => {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.addEventListener('input', () => {
+            AppState.aiInstructionDrafts[tabKey] = el.value;
             persistAiUiState();
             scheduleCloudConfigSync();
             updateModulePreview();
             updatePromptPreview();
         });
-    }
+    });
 
     ['guide_opening_scene', 'aiOpeningWordCount', 'aiXpCore'].forEach(id => {
         const el = document.getElementById(id);

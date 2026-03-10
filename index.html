@@ -1376,13 +1376,29 @@
 描述保持可用于角色卡的结构化表达，避免空泛。</textarea>
                                 </div>
                             </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header" for="aiInstructionsChar" style="cursor:default;">
+                                    <span class="guide-tag">instructions_char</span>
+                                    <span class="guide-title">人设卡填卡说明（可自定义）</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">用于告诉 AI 这次要如何补全整张人设卡：希望重点照顾的模块、写作风格偏好、可以参考或避免的套路等。默认内容会提供一套通用的人设卡补全要求，你也可以根据自己的创作习惯自由修改。</div>
+                                    <textarea id="aiInstructionsChar" rows="6"></textarea>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="ai-subtab-panel" id="ai-subtab-worldview">
-                            <div class="ai-empty-card">
-                                <div class="ai-empty-card-icon">🌍</div>
-                                <h3>世界观</h3>
-                                <p>该卡片暂时空置，后续可在这里扩展世界观生成相关模块。</p>
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header" for="aiInstructionsWorld" style="cursor:default;">
+                                    <span class="guide-tag">instructions_worldinfo</span>
+                                    <span class="guide-title">世界观拟定说明（可自定义）</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">用于约定「世界书」要写成什么风格：需要重点说明时代背景、特殊设定、NPC 阵容、前端美化需求，还是更侧重长线剧情走向、世界线规则与隐藏真相等。默认说明会结合上方【世界书】模块的字段给出一套建议结构，你可以在此基础上增删细化。</div>
+                                    <textarea id="aiInstructionsWorld" rows="8"></textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -1454,19 +1470,19 @@
                                     <input type="text" id="aiOpeningWordCount" value="800-1000字" placeholder="例如：800-1000字 / 1200字左右 / 不超过1500字">
                                 </div>
                             </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header" for="aiInstructionsOpening" style="cursor:default;">
+                                    <span class="guide-tag">instructions_opening</span>
+                                    <span class="guide-title">开场白创作说明（可自定义）</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">用于告诉 AI 这段开场白的整体风格与节奏偏好：叙事视角、文风轻重、对话与描写的比例、是否保留留白、需要避开的情节处理方式等。默认内容提供一套通用的开场白写作要求，你可以按自己的口味进行调整。</div>
+                                    <textarea id="aiInstructionsOpening" rows="6"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="ai-block">
-                    <div class="ai-block-label"><span class="ai-tag-badge">instructions</span> 填卡说明（可自定义）</div>
-                    <textarea id="aiInstructions" rows="8">请根据用户提供的需求与各模块引导词，补全对应的人设卡内容。
-要求：
-1. 只生成本次请求的模块；
-2. 若表单里已有内容，请优先参考并保持设定一致；
-3. 列表字段尽量提供 2-5 个条目，描述精炼但有层次；
-4. 设定之间要前后呼应，避免互相冲突；
-5. 风格保持细腻、自然、适合角色卡直接使用。</textarea>
                 </div>
 
                 <!-- 需求4: 流式输出开关 -->
