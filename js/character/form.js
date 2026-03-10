@@ -290,7 +290,9 @@ function removeArrayItem(btn) {
 function bindTabEvents() {
     // 绑定顶级标签事件（人设卡 / 世界书 / 灵感池 / AI 辅助）
     document.querySelectorAll('.top-tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (event) => {
+            // 防止位于 <form> 内部的按钮触发表单提交，造成整张人设卡被拼进 URL
+            if (event && typeof event.preventDefault === 'function') event.preventDefault();
             document.querySelectorAll('.top-tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.top-tab-content').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
@@ -301,7 +303,9 @@ function bindTabEvents() {
 
     // 绑定子级标签事件（人设卡内部的基础信息 / 背景故事等）
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (event) => {
+            // 同样阻止子级标签按钮触发表单的默认提交行为
+            if (event && typeof event.preventDefault === 'function') event.preventDefault();
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
