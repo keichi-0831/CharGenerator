@@ -10,7 +10,21 @@ const SIMPLE_IDS = [
     'speech_with_user','speech_reasoning','speech_accent','speech_online',
     'additional_notes',
     'age_range_childhood','age_range_teenage','age_range_youth','age_range_current',
-    'nsfw_experiences','nsfw_orientation'
+    'nsfw_experiences','nsfw_orientation',
+
+    // 世界书：单字段类（内容本体）
+    'world_statusbar','world_era_background','world_special_settings',
+    'world_frontend_decor','world_persona_correction','world_state_specified','world_extra',
+
+    // 世界书：每条条目的导出配置（名称 / 触发方式 / 关键字 / 位置 / 深度 / 顺序）
+    'world_statusbar_comment','world_statusbar_constant','world_statusbar_key','world_statusbar_position','world_statusbar_depth','world_statusbar_order',
+    'world_era_background_comment','world_era_background_constant','world_era_background_key','world_era_background_position','world_era_background_depth','world_era_background_order',
+    'world_special_settings_comment','world_special_settings_constant','world_special_settings_key','world_special_settings_position','world_special_settings_depth','world_special_settings_order',
+    'world_npcs_comment','world_npcs_constant','world_npcs_key','world_npcs_position','world_npcs_depth','world_npcs_order',
+    'world_frontend_decor_comment','world_frontend_decor_constant','world_frontend_decor_key','world_frontend_decor_position','world_frontend_decor_depth','world_frontend_decor_order',
+    'world_persona_correction_comment','world_persona_correction_constant','world_persona_correction_key','world_persona_correction_position','world_persona_correction_depth','world_persona_correction_order',
+    'world_state_specified_comment','world_state_specified_constant','world_state_specified_key','world_state_specified_position','world_state_specified_depth','world_state_specified_order',
+    'world_extra_comment','world_extra_constant','world_extra_key','world_extra_position','world_extra_depth','world_extra_order'
 ];
 
 const ARRAY_DEFS = [
@@ -49,6 +63,9 @@ const ARRAY_DEFS = [
     ['nsfw-habits-container',     'nsfw-habits-item',     true],
     ['kinks-container',           'kinks-item',           false],
     ['limits-container',          'limits-item',          false],
+
+    // 世界书：数组类
+    ['world_npc-container',       'world_npc-item',       true],
 ];
 
 const LS_CHARS = 'rp_characters';
@@ -90,6 +107,54 @@ const MODULE_JSON_SCHEMA = {
     speech: `  "speech": { "speech_with_user":"", "speech_reasoning":"", "speech_accent":"", "speech_online":"" }`,
     extra: `  "extra": { "additional_notes":"", "catchphrases":[], "mannerisms":[], "trauma":[], "values":[], "conflicts":[], "secrets":[], "relationships":[], "defining_moments":[] }`,
     nsfw: `  "nsfw": { "experiences":"", "sexual_orientation":"", "sexual_role":[], "sexual_habits":[], "kinks":[], "limits":[] }`,
+
+    // worldbook: 预留世界书导出结构（供 AI 子标签 / 将来 YAML 导出使用）
+    worldbook: `  "worldbook": {
+    "statusbar":"",
+    "era_background":"",
+    "special_settings":"",
+    "npcs":[],
+    "frontend_decor":"",
+    "persona_correction":"",
+    "state_specified":"",
+    "extra":""
+  }`,
+};
+
+// 世界书导出到 SillyTavern JSON 时使用的默认字段（除去用户可配置项）
+// 用户可在界面上配置的字段只有：
+// comment, content, constant, key, position, depth, order
+// 其他字段全部按照这里的默认值写死
+const WORLDBOOK_JSON_DEFAULTS = {
+    keysecondary: [],
+    vectorized: false,
+    selective: true,
+    selectiveLogic: 0,
+    addMemo: true,
+    disable: false,
+    excludeRecursion: false,
+    preventRecursion: false,
+    matchPersonaDescription: false,
+    matchCharacterDescription: false,
+    matchCharacterPersonality: false,
+    matchCharacterDepthPrompt: false,
+    matchScenario: false,
+    matchCreatorNotes: false,
+    delayUntilRecursion: false,
+    probability: 100,
+    useProbability: true,
+    group: "",
+    groupOverride: false,
+    groupWeight: 100,
+    scanDepth: null,
+    caseSensitive: null,
+    matchWholeWords: null,
+    useGroupScoring: null,
+    automationId: "",
+    role: 0,
+    sticky: 0,
+    cooldown: 0,
+    delay: 0
 };
 
 const AI_SUBTAB_PERSONA_CARD = 'persona-card';

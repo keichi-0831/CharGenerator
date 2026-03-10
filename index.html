@@ -658,11 +658,413 @@
                     <div class="section-icon">🌍</div>
                     <h2>世界书</h2>
                 </div>
-                <p style="padding: 12px 0; color: var(--text-sub); text-align: center;">世界书功能正在开发中……</p>
-                <div class="ai-empty-card" style="margin-top:12px;">
-                    <div class="ai-empty-card-icon">🧱</div>
-                    <h3>预留扩展入口</h3>
-                    <p>这里预留为后续「世界观 / 世界书」模块的功能区。当前版本仅作为导航占位，不参与任何数据读写，也不会影响其他模块的行为。</p>
+                <p style="padding: 10px 0 14px; color: var(--text-sub); font-size:0.9rem;">
+                    本页用于记录与整张人设卡相关的<strong>世界观/剧情语境</strong>。所有内容都会与角色卡一起保存在本地和云端，
+                    导出 YAML 时也会预留对应结构；任意项目都可以留空不写，将在导出时自动跳过。
+                </p>
+
+                <!-- 1. 状态栏 -->
+                <div class="form-group">
+                    <label>状态栏</label>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin:4px 0 6px;">
+                        提示 AI 在每次输出前可选加入的「状态栏」信息，例如：时间、地点、天气、服装、姿态、心情等。
+                        可描述你想要的状态栏格式、包含字段或使用示例。
+                    </div>
+                    <textarea id="world_statusbar" rows="3" placeholder="例如：\n【时间】xxxx年x月x日 夜\n【地点】x市x路x号 的咖啡店角落\n【天气】夜雨/微凉/有风\n【状态】char 穿着……，正……"></textarea>
+                    <div class="worldbook-entry-config" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-color);border-radius:6px;font-size:0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">条目名称</label>
+                                <input type="text" id="world_statusbar_comment" placeholder="默认：状态栏">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">触发方式</label>
+                                <select id="world_statusbar_constant">
+                                    <option value="true">常量触发（始终生效）</option>
+                                    <option value="false">关键词触发</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">关键字（逗号分隔，可留空）</label>
+                                <input type="text" id="world_statusbar_key" placeholder="例如：海边, 下雨">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入位置</label>
+                                <select id="world_statusbar_position">
+                                    <option value="0">0 = 角色描述前</option>
+                                    <option value="1">1 = 角色描述后</option>
+                                    <option value="2" selected>2 = 示例对话前</option>
+                                    <option value="3">3 = 示例对话后</option>
+                                    <option value="4">4 = 作者的话/聊天中</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入深度</label>
+                                <input type="number" id="world_statusbar_depth" value="2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入顺序</label>
+                                <input type="number" id="world_statusbar_order" value="100" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 时代背景 -->
+                <div class="form-group">
+                    <label>时代背景</label>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin:4px 0 6px;">
+                        与该人设及主要剧情相关的时间线、空间环境、经济政治、社会风气、习俗文化等整体背景。
+                    </div>
+                    <textarea id="world_era_background" rows="4" placeholder="例如：近未来赛博朋克城市 / 现代都市 / 架空古代王朝……"></textarea>
+                    <div class="worldbook-entry-config" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-color);border-radius:6px;font-size:0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">条目名称</label>
+                                <input type="text" id="world_era_background_comment" placeholder="默认：时代背景">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">触发方式</label>
+                                <select id="world_era_background_constant">
+                                    <option value="true">常量触发（始终生效）</option>
+                                    <option value="false">关键词触发</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">关键字（逗号分隔，可留空）</label>
+                                <input type="text" id="world_era_background_key" placeholder="例如：现代, 都市">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入位置</label>
+                                <select id="world_era_background_position">
+                                    <option value="0">0 = 角色描述前</option>
+                                    <option value="1">1 = 角色描述后</option>
+                                    <option value="2" selected>2 = 示例对话前</option>
+                                    <option value="3">3 = 示例对话后</option>
+                                    <option value="4">4 = 作者的话/聊天中</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入深度</label>
+                                <input type="number" id="world_era_background_depth" value="2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入顺序</label>
+                                <input type="number" id="world_era_background_order" value="100" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 特殊设定 -->
+                <div class="form-group">
+                    <label>特殊设定</label>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin:4px 0 6px;">
+                        写明是否存在花吐症、ABO、哨兵向导、机设、魔法体系、游戏规则等特殊设定；如有，请尽量说明清楚规则与限制。
+                    </div>
+                    <textarea id="world_special_settings" rows="4" placeholder="例如：本世界采用 ABO 设定，具体规则为……"></textarea>
+                    <div class="worldbook-entry-config" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-color);border-radius:6px;font-size:0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">条目名称</label>
+                                <input type="text" id="world_special_settings_comment" placeholder="默认：特殊设定">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">触发方式</label>
+                                <select id="world_special_settings_constant">
+                                    <option value="true">常量触发（始终生效）</option>
+                                    <option value="false">关键词触发</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">关键字（逗号分隔，可留空）</label>
+                                <input type="text" id="world_special_settings_key" placeholder="例如：ABO, 机设">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入位置</label>
+                                <select id="world_special_settings_position">
+                                    <option value="0">0 = 角色描述前</option>
+                                    <option value="1">1 = 角色描述后</option>
+                                    <option value="2" selected>2 = 示例对话前</option>
+                                    <option value="3">3 = 示例对话后</option>
+                                    <option value="4">4 = 作者的话/聊天中</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入深度</label>
+                                <input type="number" id="world_special_settings_depth" value="2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入顺序</label>
+                                <input type="number" id="world_special_settings_order" value="100" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. NPCs -->
+                <div class="form-group">
+                    <label>NPCs</label>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin:4px 0 6px;">
+                        在这张卡里<strong>可能会出现的非 char 与非 {{user}} 的角色</strong>，以及他们与主角之间的关系、在剧情中的作用。
+                        一条写一个 NPC，空白条会在导出时自动跳过。
+                    </div>
+                    <div class="array-container" id="world_npc-container">
+                        <div class="array-item">
+                            <textarea class="world_npc-item" name="world_npc-item" placeholder="例如：\n【姓名】林安然（char 的同事）\n【关系】大学同学 / 现同部门搭档\n【作用】负责把工作压力和职场冲突带进剧情……"></textarea>
+                            <button type="button" class="btn btn-remove" onclick="removeArrayItem(this)">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-add" onclick="addTextareaItem('world_npc-container','world_npc-item')">+ 添加 NPC</button>
+                    <div class="worldbook-entry-config" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-color);border-radius:6px;font-size:0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">条目名称</label>
+                                <input type="text" id="world_npcs_comment" placeholder="默认：NPCs">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">触发方式</label>
+                                <select id="world_npcs_constant">
+                                    <option value="true">常量触发（始终生效）</option>
+                                    <option value="false">关键词触发</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">关键字（逗号分隔，可留空）</label>
+                                <input type="text" id="world_npcs_key" placeholder="例如：经纪人, 导演">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入位置</label>
+                                <select id="world_npcs_position">
+                                    <option value="0">0 = 角色描述前</option>
+                                    <option value="1">1 = 角色描述后</option>
+                                    <option value="2" selected>2 = 示例对话前</option>
+                                    <option value="3">3 = 示例对话后</option>
+                                    <option value="4">4 = 作者的话/聊天中</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入深度</label>
+                                <input type="number" id="world_npcs_depth" value="2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入顺序</label>
+                                <input type="number" id="world_npcs_order" value="100" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. 前端美化 -->
+                <div class="form-group">
+                    <label>前端美化</label>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin:4px 0 6px;">
+                        如果你计划在前端做同层论坛、小剧场手机界面、聊天窗口等视觉美化，可以在这里写下大致想法或需要预留的元素。
+                    </div>
+                    <textarea id="world_frontend_decor" rows="3" placeholder="例如：开场在手机聊天界面展开，需要保留聊天气泡 / 时间戳 / 未读红点……"></textarea>
+                    <div class="worldbook-entry-config" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-color);border-radius:6px;font-size:0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">条目名称</label>
+                                <input type="text" id="world_frontend_decor_comment" placeholder="默认：前端美化">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">触发方式</label>
+                                <select id="world_frontend_decor_constant">
+                                    <option value="true">常量触发（始终生效）</option>
+                                    <option value="false">关键词触发</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">关键字（逗号分隔，可留空）</label>
+                                <input type="text" id="world_frontend_decor_key" placeholder="例如：聊天界面, UI">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入位置</label>
+                                <select id="world_frontend_decor_position">
+                                    <option value="0">0 = 角色描述前</option>
+                                    <option value="1">1 = 角色描述后</option>
+                                    <option value="2" selected>2 = 示例对话前</option>
+                                    <option value="3">3 = 示例对话后</option>
+                                    <option value="4">4 = 作者的话/聊天中</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入深度</label>
+                                <input type="number" id="world_frontend_decor_depth" value="2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入顺序</label>
+                                <input type="number" id="world_frontend_decor_order" value="100" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. 人设纠偏 -->
+                <div class="form-group">
+                    <label>人设纠偏</label>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin:4px 0 6px;">
+                        在实际跑卡/写文过程中发现 AI 演绎有偏差时，可以在这里记录「不要这样写」「更接近本意的写法」等纠偏说明。
+                    </div>
+                    <textarea id="world_persona_correction" rows="3" placeholder="例如：char 不会用“宝贝”这个称呼，更习惯用名字或“小朋友”。"></textarea>
+                    <div class="worldbook-entry-config" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-color);border-radius:6px;font-size:0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">条目名称</label>
+                                <input type="text" id="world_persona_correction_comment" placeholder="默认：人设纠偏">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">触发方式</label>
+                                <select id="world_persona_correction_constant">
+                                    <option value="true">常量触发（始终生效）</option>
+                                    <option value="false">关键词触发</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">关键字（逗号分隔，可留空）</label>
+                                <input type="text" id="world_persona_correction_key" placeholder="例如：纠偏, 跑偏">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入位置</label>
+                                <select id="world_persona_correction_position">
+                                    <option value="0">0 = 角色描述前</option>
+                                    <option value="1">1 = 角色描述后</option>
+                                    <option value="2" selected>2 = 示例对话前</option>
+                                    <option value="3">3 = 示例对话后</option>
+                                    <option value="4">4 = 作者的话/聊天中</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入深度</label>
+                                <input type="number" id="world_persona_correction_depth" value="2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入顺序</label>
+                                <input type="number" id="world_persona_correction_order" value="100" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. 指定状态 -->
+                <div class="form-group">
+                    <label>指定状态</label>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin:4px 0 6px;">
+                        写 char 和 {{user}} 当前所处的关系阶段或剧情节点，用于提示 AI 现在是「第几周」「冷战期」「复合后」等具体状态。
+                    </div>
+                    <textarea id="world_state_specified" rows="3" placeholder="例如：两人目前处于冷战后的微妙缓和期，刚刚重新开始聊天……"></textarea>
+                    <div class="worldbook-entry-config" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-color);border-radius:6px;font-size:0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">条目名称</label>
+                                <input type="text" id="world_state_specified_comment" placeholder="默认：指定状态">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">触发方式</label>
+                                <select id="world_state_specified_constant">
+                                    <option value="true">常量触发（始终生效）</option>
+                                    <option value="false">关键词触发</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">关键字（逗号分隔，可留空）</label>
+                                <input type="text" id="world_state_specified_key" placeholder="例如：冷战期, 复合后">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入位置</label>
+                                <select id="world_state_specified_position">
+                                    <option value="0">0 = 角色描述前</option>
+                                    <option value="1">1 = 角色描述后</option>
+                                    <option value="2" selected>2 = 示例对话前</option>
+                                    <option value="3">3 = 示例对话后</option>
+                                    <option value="4">4 = 作者的话/聊天中</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入深度</label>
+                                <input type="number" id="world_state_specified_depth" value="2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入顺序</label>
+                                <input type="number" id="world_state_specified_order" value="100" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. 额外补充 -->
+                <div class="form-group">
+                    <label>额外补充</label>
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin:4px 0 6px;">
+                        任何上面没提到、但和世界观/长线剧情相关的重要信息，都可以写在这里。
+                    </div>
+                    <textarea id="world_extra" rows="4" placeholder="例如：世界线收束条件、隐藏设定、只有作者自己知道的真相等……"></textarea>
+                    <div class="worldbook-entry-config" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-color);border-radius:6px;font-size:0.85rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">条目名称</label>
+                                <input type="text" id="world_extra_comment" placeholder="默认：额外补充">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">触发方式</label>
+                                <select id="world_extra_constant">
+                                    <option value="true">常量触发（始终生效）</option>
+                                    <option value="false">关键词触发</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">关键字（逗号分隔，可留空）</label>
+                                <input type="text" id="world_extra_key" placeholder="例如：世界线, 设定">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入位置</label>
+                                <select id="world_extra_position">
+                                    <option value="0">0 = 角色描述前</option>
+                                    <option value="1">1 = 角色描述后</option>
+                                    <option value="2" selected>2 = 示例对话前</option>
+                                    <option value="3">3 = 示例对话后</option>
+                                    <option value="4">4 = 作者的话/聊天中</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入深度</label>
+                                <input type="number" id="world_extra_depth" value="2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.8rem;">插入顺序</label>
+                                <input type="number" id="world_extra_order" value="100" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 导出：世界书 YAML / JSON -->
+                <div class="export-section" style="margin-top:20px;">
+                    <div class="export-header">
+                        <h3>世界书导出</h3>
+                        <p>可选择复制 YAML 文本或导出 SillyTavern 世界书 JSON 文件。</p>
+                    </div>
+                    <div class="export-buttons">
+                        <button type="button" class="btn btn-normal" onclick="exportWorldbookYaml()">📋 复制 YAML（世界书）</button>
+                        <button type="button" class="btn btn-export-main" onclick="exportWorldbookJson()">💾 导出 JSON（世界书）</button>
+                    </div>
                 </div>
             </div>
         </div>

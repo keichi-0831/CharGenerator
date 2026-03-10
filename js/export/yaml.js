@@ -194,3 +194,240 @@ function clearForm() {
         triggerAutoSave();
     }
 }
+
+// ============================================================
+//  世界书：YAML / JSON 导出（SillyTavern 世界书格式）
+// ============================================================
+
+function applyUserAlias(text) {
+    const aliasEl = document.getElementById('replace_alias');
+    if (!aliasEl) return text;
+    const alias = aliasEl.value.trim();
+    if (!alias) return text;
+    return String(text || '').split(alias).join('{{user}}');
+}
+
+// -------- YAML 文本导出（可复制） --------
+
+function generateWorldbookYaml() {
+    const indent = '  ';
+    const v = id => (document.getElementById(id)?.value || '').trim();
+
+    const statusbar = v('world_statusbar');
+    const eraBackground = v('world_era_background');
+    const specialSettings = v('world_special_settings');
+    const npcs = getArrayValues('world_npc-container', 'world_npc-item');
+    const frontendDecor = v('world_frontend_decor');
+    const personaCorrection = v('world_persona_correction');
+    const stateSpecified = v('world_state_specified');
+    const extra = v('world_extra');
+
+    let yaml = '```yaml\nworldbook:\n';
+    if (statusbar) yaml += `${indent}statusbar: ${escapeYaml(statusbar)}\n`;
+    if (eraBackground) yaml += `${indent}era_background: ${escapeYaml(eraBackground)}\n`;
+    if (specialSettings) yaml += `${indent}special_settings: ${escapeYaml(specialSettings)}\n`;
+    if (npcs.length) {
+        yaml += `${indent}npcs:\n`;
+        npcs.forEach(i => { yaml += `${indent}${indent}- ${escapeYaml(i)}\n`; });
+    }
+    if (frontendDecor) yaml += `${indent}frontend_decor: ${escapeYaml(frontendDecor)}\n`;
+    if (personaCorrection) yaml += `${indent}persona_correction: ${escapeYaml(personaCorrection)}\n`;
+    if (stateSpecified) yaml += `${indent}state_specified: ${escapeYaml(stateSpecified)}\n`;
+    if (extra) yaml += `${indent}extra: ${escapeYaml(extra)}\n`;
+    yaml += '```';
+
+    yaml = applyUserAlias(yaml);
+    return yaml;
+}
+
+function exportWorldbookYaml() {
+    const text = generateWorldbookYaml();
+    navigator.clipboard.writeText(text)
+        .then(() => showToast('✅ 世界书 YAML 已复制到剪贴板！'))
+        .catch(() => alert('复制失败'));
+}
+
+// -------- JSON 文件导出（SillyTavern 世界书 entries 格式） --------
+
+function buildWorldbookEntry(base) {
+    // base: { content, commentId, constantId, keyId, positionId, depthId, orderId, defaultComment }
+    const content = String(base.content || '').trim();
+    if (!content) return null;
+
+    const commentEl = document.getElementById(base.commentId);
+    const constantEl = document.getElementById(base.constantId);
+    const keyEl = document.getElementById(base.keyId);
+    const positionEl = document.getElementById(base.positionId);
+    const depthEl = document.getElementById(base.depthId);
+    const orderEl = document.getElementById(base.orderId);
+
+    const commentRaw = commentEl ? commentEl.value.trim() : '';
+    const comment = commentRaw || base.defaultComment || '';
+
+    const constantStr = constantEl ? constantEl.value.trim() : 'true';
+    const constant = (constantStr === 'false') ? false : true;
+
+    const keyRaw = keyEl ? keyEl.value.trim() : '';
+    const key = keyRaw
+        ? keyRaw.split(/[，,]/).map(s => s.trim()).filter(Boolean)
+        : [];
+
+    let position = positionEl ? parseInt(positionEl.value, 10) : 2;
+    if (Number.isNaN(position)) position = 2;
+
+    let depth = depthEl ? parseInt(depthEl.value, 10) : 2;
+    if (Number.isNaN(depth)) depth = 2;
+
+    let order = orderEl ? parseInt(orderEl.value, 10) : 100;
+    if (Number.isNaN(order)) order = 100;
+
+    return Object.assign({}, (typeof WORLDBOOK_JSON_DEFAULTS === 'object' ? WORLDBOOK_JSON_DEFAULTS : {}), {
+        key,
+        comment,
+        content,
+        constant,
+        position,
+        depth,
+        order
+    });
+}
+
+function buildWorldbookEntriesFromForm() {
+    const entries = {};
+    let idx = 0;
+    const v = id => (document.getElementById(id)?.value || '').trim();
+
+    function pushEntry(content, config) {
+        const text = applyUserAlias(content || '').trim();
+        if (!text) return;
+        const entry = buildWorldbookEntry(Object.assign({}, config, { content: text }));
+        if (!entry) return;
+        entry.uid = idx;
+        entry.displayIndex = idx;
+        entries[String(idx)] = entry;
+        idx += 1;
+    }
+
+    // 1. 状态栏
+    pushEntry(v('world_statusbar'), {
+        commentId: 'world_statusbar_comment',
+        constantId: 'world_statusbar_constant',
+        keyId: 'world_statusbar_key',
+        positionId: 'world_statusbar_position',
+        depthId: 'world_statusbar_depth',
+        orderId: 'world_statusbar_order',
+        defaultComment: '状态栏'
+    });
+
+    // 2. 时代背景
+    pushEntry(v('world_era_background'), {
+        commentId: 'world_era_background_comment',
+        constantId: 'world_era_background_constant',
+        keyId: 'world_era_background_key',
+        positionId: 'world_era_background_position',
+        depthId: 'world_era_background_depth',
+        orderId: 'world_era_background_order',
+        defaultComment: '时代背景'
+    });
+
+    // 3. 特殊设定
+    pushEntry(v('world_special_settings'), {
+        commentId: 'world_special_settings_comment',
+        constantId: 'world_special_settings_constant',
+        keyId: 'world_special_settings_key',
+        positionId: 'world_special_settings_position',
+        depthId: 'world_special_settings_depth',
+        orderId: 'world_special_settings_order',
+        defaultComment: '特殊设定'
+    });
+
+    // 4. NPCs（数组，合并成一个内容字符串）
+    const npcList = getArrayValues('world_npc-container', 'world_npc-item');
+    if (npcList.length) {
+        pushEntry(npcList.join('\n\n'), {
+            commentId: 'world_npcs_comment',
+            constantId: 'world_npcs_constant',
+            keyId: 'world_npcs_key',
+            positionId: 'world_npcs_position',
+            depthId: 'world_npcs_depth',
+            orderId: 'world_npcs_order',
+            defaultComment: 'NPCs'
+        });
+    }
+
+    // 5. 前端美化
+    pushEntry(v('world_frontend_decor'), {
+        commentId: 'world_frontend_decor_comment',
+        constantId: 'world_frontend_decor_constant',
+        keyId: 'world_frontend_decor_key',
+        positionId: 'world_frontend_decor_position',
+        depthId: 'world_frontend_decor_depth',
+        orderId: 'world_frontend_decor_order',
+        defaultComment: '前端美化'
+    });
+
+    // 6. 人设纠偏
+    pushEntry(v('world_persona_correction'), {
+        commentId: 'world_persona_correction_comment',
+        constantId: 'world_persona_correction_constant',
+        keyId: 'world_persona_correction_key',
+        positionId: 'world_persona_correction_position',
+        depthId: 'world_persona_correction_depth',
+        orderId: 'world_persona_correction_order',
+        defaultComment: '人设纠偏'
+    });
+
+    // 7. 指定状态
+    pushEntry(v('world_state_specified'), {
+        commentId: 'world_state_specified_comment',
+        constantId: 'world_state_specified_constant',
+        keyId: 'world_state_specified_key',
+        positionId: 'world_state_specified_position',
+        depthId: 'world_state_specified_depth',
+        orderId: 'world_state_specified_order',
+        defaultComment: '指定状态'
+    });
+
+    // 8. 额外补充
+    pushEntry(v('world_extra'), {
+        commentId: 'world_extra_comment',
+        constantId: 'world_extra_constant',
+        keyId: 'world_extra_key',
+        positionId: 'world_extra_position',
+        depthId: 'world_extra_depth',
+        orderId: 'world_extra_order',
+        defaultComment: '额外补充'
+    });
+
+    return entries;
+}
+
+function downloadTextFile(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function exportWorldbookJson() {
+    const entries = buildWorldbookEntriesFromForm();
+    if (!entries || Object.keys(entries).length === 0) {
+        alert('世界书内容为空，无法导出 JSON');
+        return;
+    }
+    const payload = { entries };
+    const jsonStr = JSON.stringify(payload, null, 2);
+
+    const charNameEl = document.getElementById('char_name');
+    const baseNameRaw = charNameEl ? charNameEl.value.trim() : '';
+    const baseName = baseNameRaw || 'worldbook';
+    const filename = `${baseName}_worldbook.json`;
+
+    downloadTextFile(filename, jsonStr, 'application/json');
+    showToast('💾 已导出世界书 JSON 文件');
+}
