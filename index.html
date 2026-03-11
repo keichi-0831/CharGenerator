@@ -1390,6 +1390,143 @@
                         </div>
 
                         <div class="ai-subtab-panel" id="ai-subtab-worldview">
+                            <!-- 状态栏 -->
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="world_statusbar" data-ai-tab="worldview" checked>
+                                    <span class="guide-tag">world_statusbar</span>
+                                    <span class="guide-title">状态栏</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">引导 AI 设计一套可复用的「状态栏」格式与内容范围，用于在对话前快速交代时间、地点、天气、服装、心情等关键信息。</div>
+                                    <textarea id="guide_world_statusbar" rows="4">请为本世界线设计适合长期使用的「状态栏」格式与示例内容：
+1. 给出推荐的字段顺序（如：时间 / 地点 / 天气 / 角色当前状态等）；
+2. 说明每个字段里适合写哪些信息，推荐使用怎样的文风；
+3. 结合当前角色与 XP_core，给出 1-2 段示范性的状态栏描述。
+请直接围绕状态栏本身展开，而不是写长篇剧情。</textarea>
+                                </div>
+                            </div>
+
+                            <!-- 时代背景 -->
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="world_era_background" data-ai-tab="worldview" checked>
+                                    <span class="guide-tag">world_era_background</span>
+                                    <span class="guide-title">时代背景</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">引导 AI 为当前角色与剧情拟定清晰的时间线、空间环境与社会氛围，便于后续所有故事都落在同一世界观下。</div>
+                                    <textarea id="guide_world_era_background" rows="4">请根据 XP_core 中的需求，为本角色所在的世界拟定「时代背景」：
+1. 明确时间范畴（如现代都市 / 近未来 / 架空古代等）与大致地理环境；
+2. 描述整体社会结构、经济状况、科技/魔法水平、主流价值观与社会风气；
+3. 说明这些背景如何影响角色与 {{user}} 的关系或剧情走向。
+内容要具体可用、便于直接填入世界书。</textarea>
+                                </div>
+                            </div>
+
+                            <!-- 特殊设定 -->
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="world_special_settings" data-ai-tab="worldview">
+                                    <span class="guide-tag">world_special_settings</span>
+                                    <span class="guide-title">特殊设定</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">引导 AI 梳理花吐症 / ABO / 哨向 / 机设 / 魔法体系 / 游戏规则等一切「超出现实」的设定，并说明其规则与限制。</div>
+                                    <textarea id="guide_world_special_settings" rows="4">请整理本世界中所有与现实不同的「特殊设定」，例如：花吐症、ABO、哨兵向导、机体设定、魔法体系、游戏规则等：
+1. 每类设定给出简明扼要的规则说明和限制条件；
+2. 指出这些设定会如何具体影响角色的日常、剧情冲突或 {{user}} 的体验；
+3. 如有 NSFW 相关规则，请一并说明边界与避雷点。
+请写成便于直接作为世界书条目的说明文字。</textarea>
+                                </div>
+                            </div>
+
+                            <!-- NPCs -->
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="world_npcs" data-ai-tab="worldview">
+                                    <span class="guide-tag">world_npcs</span>
+                                    <span class="guide-title">NPCs</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">引导 AI 设计与本角色 / {{user}} 强相关的配角阵容，用于在跑卡或写文时反复调用。</div>
+                                    <textarea id="guide_world_npcs" rows="4">请为本世界设计一份 NPC 清单，重点包含会在本卡故事中频繁出现的配角：
+1. 每条 NPC 至少写明：姓名 / 与角色和 {{user}} 的关系 / 在剧情中的功能；
+2. 适当补充他们的性格或外在标签，让其便于在对话或叙事中被调用；
+3. NPC 数量以 3-8 个为宜，避免过多喧宾夺主。
+请按条目形式输出，便于直接填入世界书的 NPCs 数组。</textarea>
+                                </div>
+                            </div>
+
+                            <!-- 前端美化 -->
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="world_frontend_decor" data-ai-tab="worldview">
+                                    <span class="guide-tag">world_frontend_decor</span>
+                                    <span class="guide-title">前端美化</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">引导 AI 从文本角度整理「需要在前端呈现的元素」，例如手机界面、论坛楼层、小剧场 UI 等。</div>
+                                    <textarea id="guide_world_frontend_decor" rows="4">请根据当前角色与世界观，提出一些适合在前端展示的 UI/视觉元素需求：
+1. 简要说明你设想的表现形式（如：聊天气泡、时间戳、论坛楼层、手机通知栏等）；
+2. 指出哪些元素对理解剧情或人物关系特别重要，需要在前端保留；
+3. 尽量从「信息层级」与「氛围营造」角度说明需求，而非具体代码实现。
+请写成说明性文字，便于后续前端开发参考。</textarea>
+                                </div>
+                            </div>
+
+                            <!-- 人设纠偏 -->
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="world_persona_correction" data-ai-tab="worldview">
+                                    <span class="guide-tag">world_persona_correction</span>
+                                    <span class="guide-title">人设纠偏</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">引导 AI 总结「不符合角色气质的写法」与「更接近本意的写法」，用于长期纠偏。</div>
+                                    <textarea id="guide_world_persona_correction" rows="4">请针对本角色和世界观，整理一份「人设纠偏说明」：
+1. 列出 3-8 条「不希望 AI 这么写」的典型跑偏方式（包括语气、行为、关系发展等）；
+2. 每条都给出对应的「更接近本意」的写法建议；
+3. 若有需要长期强调的创作红线，也可以一并写入。
+请保持语气明确、可操作，便于模型在调用世界书时执行。</textarea>
+                                </div>
+                            </div>
+
+                            <!-- 指定状态 -->
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="world_state_specified" data-ai-tab="worldview">
+                                    <span class="guide-tag">world_state_specified</span>
+                                    <span class="guide-title">指定状态</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">引导 AI 总结「当前剧情进行到哪一步」，用于在长线跑卡中对齐时间线与关系阶段。</div>
+                                    <textarea id="guide_world_state_specified" rows="4">请根据 XP_core 与当前角色设定，写出本卡在世界观维度下的「当前指定状态」：
+1. 说明角色与 {{user}} 现在处于怎样的关系阶段或剧情节点；
+2. 简要回顾导致这一状态的关键事件（可引用背景故事或世界观设定）；
+3. 指出接下来故事发展的大致方向或张力来源。
+请聚焦「现在是第几步」这种时间线定位，而非展开新的长篇剧情。</textarea>
+                                </div>
+                            </div>
+
+                            <!-- 额外补充 -->
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="world_extra" data-ai-tab="worldview">
+                                    <span class="guide-tag">world_extra</span>
+                                    <span class="guide-title">额外补充</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">引导 AI 补充任何与世界线、隐藏真相、长线伏笔相关但尚未归类的信息。</div>
+                                    <textarea id="guide_world_extra" rows="4">请补充任何与本世界观和长期剧情相关、但前面未写到的重要信息：
+1. 可以是世界线收束条件、隐藏设定、幕后真相或作者自用的设想；
+2. 说明这些信息在未来剧情中可能起到的作用（如重大反转、情感爆点等）；
+3. 如有需要保密给读者/玩家但 AI 必须知道的内容，也可以写在这里。
+请控制在数段文字内，聚焦设定本身而非具体情节展开。</textarea>
+                                </div>
+                            </div>
+
+                            <!-- 整体说明 -->
                             <div class="ai-guide-module">
                                 <label class="ai-guide-header" for="aiInstructionsWorld" style="cursor:default;">
                                     <span class="guide-tag">instructions_worldinfo</span>

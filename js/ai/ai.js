@@ -29,7 +29,12 @@ function collectAiUiState() {
         moduleChecks[el.value] = !!el.checked;
     });
     const moduleGuides = {};
-    ['basic','background','appearance','personality','user_relation','behavior','speech','extra','nsfw'].forEach(k => {
+    // 人设卡各模块
+    ['basic','background','appearance','personality','user_relation','behavior','speech','extra','nsfw',
+     // 世界书各模块（世界观子标签）
+     'world_statusbar','world_era_background','world_special_settings','world_npcs',
+     'world_frontend_decor','world_persona_correction','world_state_specified','world_extra'
+    ].forEach(k => {
         moduleGuides[k] = getVal('guide_' + k, '');
     });
     moduleGuides.opening_scene = getVal('guide_opening_scene', '');
@@ -323,7 +328,14 @@ function renderModelList(models) {
 }
 
 function getSelectedModules() {
-    return Array.from(document.querySelectorAll('input[name="aiModule"]:checked')).map(el => el.value);
+    const active = getActiveAiSubtab();
+    return Array.from(document.querySelectorAll('input[name="aiModule"]:checked'))
+        .filter(el => {
+            // 没有显式 data-ai-tab 的，默认归类到人设卡子标签
+            const tab = el.dataset.aiTab || AI_SUBTAB_PERSONA_CARD;
+            return tab === active;
+        })
+        .map(el => el.value);
 }
 
 function getActiveAiSubtab() {
@@ -363,7 +375,9 @@ function normalizeAiCacheEntry(entry, tabKey = getActiveAiSubtab()) {
             : (typeof entry.reply === 'string' ? entry.reply : ''));
     if (!raw.trim()) return null;
 
-    const parsed = tabKey === AI_SUBTAB_PERSONA_CARD ? extractJsonFromText(raw) : null;
+    let parsed = null;
+    if (tabKey === AI_SUBTAB_PERSONA_CARD) parsed = extractJsonFromText(raw);
+    else if (tabKey === AI_SUBTAB_WORLDVIEW) parsed = extractWorldbookFromText(raw);
     const modules = Array.isArray(entry.modules) && entry.modules.length
         ? entry.modules
         : inferModulesFromParsedJson(parsed);
@@ -379,7 +393,7 @@ function normalizeAiCacheEntry(entry, tabKey = getActiveAiSubtab()) {
 function parseCachedAiEntry(entry, tabKey) {
     const normalized = normalizeAiCacheEntry(entry, tabKey);
     if (!normalized) return null;
-    if (tabKey === AI_SUBTAB_PERSONA_CARD) return normalized.parsed || null;
+    if (tabKey === AI_SUBTAB_PERSONA_CARD || tabKey === AI_SUBTAB_WORLDVIEW) return normalized.parsed || null;
     return null;
 }
 
@@ -544,11 +558,26 @@ function buildAiMessages() {
             const guideText = guideEl ? guideEl.value.trim() : '';
             return guideText ? `【${MODULE_LABELS[m] || m}】${guideText}` : '';
         }).filter(Boolean);
-        const selectedSchema = modules.map(m => MODULE_JSON_SCHEMA[m] || '').filter(Boolean);
+
+        // ==== 根据子标签选择不同的 JSON schema 与引用内容 ====
+        // 人设卡：按模块拼出各字段；世界观：统一使用 worldbook 顶层对象结构
+        const selectedSchema = (activeTab === AI_SUBTAB_WORLDVIEW)
+            ? [MODULE_JSON_SCHEMA.worldbook].filter(Boolean)
+            : modules.map(m => MODULE_JSON_SCHEMA[m] || '').filter(Boolean);
+
         const schemaHeader = '请严格按照以下 JSON 结构回复，不要包含任何其他文字或 markdown 标记。只需填写被请求的模块，其余留空。';
-        const dynamicInstructions = (instructions || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT) + '\n\n' + schemaHeader;
-        const existingRef = includeExistingContent ? buildExistingContentForModules(modules) : '';
-        const namingRef = buildNamerPoolBlock();
+        const dynamicInstructions = (instructions || (activeTab === AI_SUBTAB_WORLDVIEW ? AI_WORLDVIEW_INSTRUCTIONS_DEFAULT : AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT))
+            + '\n\n' + schemaHeader;
+
+        // 已填内容：人设卡和世界书分别读取自己的表单字段
+        const existingRef = includeExistingContent
+            ? (activeTab === AI_SUBTAB_WORLDVIEW
+                ? buildExistingWorldbookContent()
+                : buildExistingContentForModules(modules))
+            : '';
+
+        // 起名参考只用于人设卡子标签
+        const namingRef = (activeTab === AI_SUBTAB_WORLDVIEW) ? '' : buildNamerPoolBlock();
         const existingBlock = existingRef
             ? `<existing_filled_content>\n以下是表单里已经写好的内容，请优先参考并保持设定一致，在此基础上补全缺失内容：\n${existingRef}\n</existing_filled_content>\n\n`
             : '';
@@ -633,6 +662,35 @@ function buildExistingContentForModules(modules) {
 
     const cleaned = pruneEmptyDeep(out);
     return Object.keys(cleaned).length ? JSON.stringify(cleaned, null, 2) : '';
+}
+
+// 世界书：构建当前表单内容的 JSON，供世界观子标签在 prompt 中作为参考
+function buildExistingWorldbookContent() {
+    const v = id => (document.getElementById(id)?.value || '').trim();
+    // 复用 export/yaml.js 中的数组读取逻辑（若不可用则优雅降级）
+    const getArr = (cid, cls) => {
+        if (typeof getArrayValues === 'function') return getArrayValues(cid, cls);
+        const container = document.getElementById(cid);
+        if (!container) return [];
+        return Array.from(container.querySelectorAll('.' + cls))
+            .map(el => el.value.trim())
+            .filter(Boolean);
+    };
+
+    const worldbook = {
+        statusbar: v('world_statusbar'),
+        era_background: v('world_era_background'),
+        special_settings: v('world_special_settings'),
+        npcs: getArr('world_npc-container', 'world_npc-item'),
+        frontend_decor: v('world_frontend_decor'),
+        persona_correction: v('world_persona_correction'),
+        state_specified: v('world_state_specified'),
+        extra: v('world_extra')
+    };
+
+    const cleaned = pruneEmptyDeep(worldbook);
+    if (!cleaned || Object.keys(cleaned).length === 0) return '';
+    return JSON.stringify({ worldbook: cleaned }, null, 2);
 }
 
 function updateModulePreview() { updatePromptPreview(); }
@@ -783,6 +841,56 @@ function extractJsonFromText(rawText) {
         }
     }
     return Object.keys(result).length > 0 ? result : null;
+}
+
+// 针对世界观 / 世界书子标签，从 AI 回复中提取 worldbook 结构
+function extractWorldbookFromText(rawText) {
+    let cleaned = String(rawText || '').trim();
+    if (!cleaned) return null;
+
+    // 去掉可能的 ```json 包裹
+    cleaned = cleaned
+        .replace(/^```(?:json|JSON)?\s*\n?/, '')
+        .replace(/\n?\s*```\s*$/, '')
+        .trim();
+
+    // 尝试整体解析
+    const tryParse = (text) => {
+        try { return JSON.parse(text); } catch (e) { return null; }
+    };
+
+    let obj = tryParse(cleaned);
+    if (obj && typeof obj === 'object') {
+        if (obj.worldbook && typeof obj.worldbook === 'object') return obj.worldbook;
+        const keys = Object.keys(obj);
+        const expected = ['statusbar','era_background','special_settings','npcs','frontend_decor','persona_correction','state_specified','extra'];
+        const hasAny = expected.some(k => Object.prototype.hasOwnProperty.call(obj, k));
+        if (hasAny) return obj;
+    }
+
+    // 回退：用正则尝试抓取 "worldbook": { ... } 结构
+    const wbMatch = /"worldbook"\s*:\s*\{/.exec(cleaned);
+    if (wbMatch) {
+        let braceCount = 0;
+        const start = wbMatch.index + wbMatch[0].indexOf('{');
+        let end = -1;
+        for (let i = start; i < cleaned.length; i++) {
+            const ch = cleaned[i];
+            if (ch === '{') braceCount++;
+            else if (ch === '}') {
+                braceCount--;
+                if (braceCount === 0) { end = i; break; }
+            }
+        }
+        if (end > start) {
+            let block = cleaned.slice(start, end + 1);
+            block = block.replace(/,\s*([\]}])/g, '$1');
+            const parsed = tryParse(block);
+            if (parsed && typeof parsed === 'object') return parsed;
+        }
+    }
+
+    return null;
 }
 
 function copyRawReply() {
@@ -946,7 +1054,8 @@ function processAiResult(raw, modules) {
         setAiStatus('✅ 开场白生成成功！', 'success');
         return;
     }
-    AppState.aiLastJson = extractJsonFromText(raw);
+    if (tabKey === AI_SUBTAB_WORLDVIEW) AppState.aiLastJson = extractWorldbookFromText(raw);
+    else AppState.aiLastJson = extractJsonFromText(raw);
     if (AppState.aiLastJson) {
         showAiResult(raw, modules);
         setAiStatus('✅ 生成成功！确认后点击"填入表单"', 'success');
@@ -975,10 +1084,63 @@ function showAiResult(raw, modules) {
     if (shouldHideResult) section.style.display = 'none';
 }
 
+// 将 AI 解析后的结果填回表单
 function fillFormFromAI() {
-    if (!AppState.aiLastJson) { showToast('还没有可填入的 AI 结果'); return; }
     const d = AppState.aiLastJson;
+    const tabKey = getActiveAiSubtab();
+    if (!d) {
+        showToast('⚠️ 当前没有可用的解析结果，请先让 AI 生成并成功解析 JSON');
+        return;
+    }
+
     const filled = [];
+
+    // ===== 世界观 / 世界书填充逻辑 =====
+    if (tabKey === AI_SUBTAB_WORLDVIEW) {
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if (el && val !== undefined && val !== null && val !== '') el.value = val;
+        }
+        function fillArray(containerId, cls, values, isTextarea) {
+            if (!values || !values.length) return;
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            values.forEach(v => {
+                if (!v) return;
+                const div = document.createElement('div');
+                div.className = 'array-item';
+                const el = document.createElement(isTextarea ? 'textarea' : 'input');
+                if (!isTextarea) el.type = 'text';
+                el.className = cls;
+                el.value = v;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-remove';
+                btn.textContent = '✕';
+                btn.onclick = function() { removeArrayItem(this); };
+                div.appendChild(el);
+                div.appendChild(btn);
+                container.appendChild(div);
+            });
+        }
+
+        if (d.statusbar !== undefined) { setVal('world_statusbar', d.statusbar); filled.push('状态栏'); }
+        if (d.era_background !== undefined) { setVal('world_era_background', d.era_background); filled.push('时代背景'); }
+        if (d.special_settings !== undefined) { setVal('world_special_settings', d.special_settings); filled.push('特殊设定'); }
+        if (Array.isArray(d.npcs)) { fillArray('world_npc-container', 'world_npc-item', d.npcs, true); filled.push('NPCs'); }
+        if (d.frontend_decor !== undefined) { setVal('world_frontend_decor', d.frontend_decor); filled.push('前端美化'); }
+        if (d.persona_correction !== undefined) { setVal('world_persona_correction', d.persona_correction); filled.push('人设纠偏'); }
+        if (d.state_specified !== undefined) { setVal('world_state_specified', d.state_specified); filled.push('指定状态'); }
+        if (d.extra !== undefined) { setVal('world_extra', d.extra); filled.push('额外补充'); }
+
+        triggerAutoSave();
+        if (filled.length) showToast(`✨ 已填入世界书：${filled.join('、')}`);
+        else showToast('⚠️ JSON 已解析，但未找到可填入世界书的字段');
+        return;
+    }
+
+    // ===== 人设卡填充逻辑 =====
     function setVal(id, val) {
         const el = document.getElementById(id);
         if (el && val !== undefined && val !== null && val !== '') el.value = val;
@@ -1081,6 +1243,8 @@ function fillFormFromAI() {
     showToast(`✨ 已填入：${filled.join('、')}`);
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelector('[data-tab="basic"]').classList.add('active');
-    document.getElementById('tab-basic').classList.add('active');
+    const basicBtn = document.querySelector('[data-tab="basic"]');
+    const basicTab = document.getElementById('tab-basic');
+    if (basicBtn) basicBtn.classList.add('active');
+    if (basicTab) basicTab.classList.add('active');
 }
