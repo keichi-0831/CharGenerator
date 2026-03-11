@@ -1250,10 +1250,14 @@
                 <div class="ai-block">
                     <div class="ai-block-label">📦 让 AI 帮我生成的模块 <span style="font-size:0.75rem;color:var(--text-sub);font-weight:400;">（勾选后展开编辑引导词，选了多少就发多少给AI）</span></div>
 
-                    <div class="ai-block-hint" style="margin-bottom:10px;">
+                    <div class="ai-block-hint" style="margin-bottom:10px;display:flex;flex-direction:column;gap:4px;">
                         <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--text-main);">
-                            <input type="checkbox" id="includeExistingContentToAi" checked onchange="scheduleCloudConfigSync()" style="accent-color: var(--primary-color);">
-                            将该部分已填写内容一并提供给 AI 参考（用于补全剩余内容）
+                            <input type="checkbox" id="sendCharCardToAi" checked onchange="scheduleCloudConfigSync()" style="accent-color: var(--primary-color);">
+                            将人设卡已填写内容一并提供给 AI 参考（会发送整张人设卡的 YAML）
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--text-main);">
+                            <input type="checkbox" id="sendWorldbookToAi" checked onchange="scheduleCloudConfigSync()" style="accent-color: var(--primary-color);">
+                            将世界书已填写内容一并提供给 AI 参考（会发送当前世界书内容）
                         </label>
                     </div>
 

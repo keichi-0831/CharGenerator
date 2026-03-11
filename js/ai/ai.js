@@ -52,7 +52,8 @@ function collectAiUiState() {
         openingWordCount: getVal('aiOpeningWordCount', '800-1000字'),
         openingUserPortrayalMode: document.querySelector('input[name="openingUserPortrayalMode"]:checked')?.value || 'disallow',
         sendTropeToAi: getChecked('sendTropeToAi', true),
-        includeExistingContentToAi: getChecked('includeExistingContentToAi', true),
+        sendCharCardToAi: getChecked('sendCharCardToAi', true),
+        sendWorldbookToAi: getChecked('sendWorldbookToAi', true),
         useNamerPoolForAi: getChecked('useNamerPoolForAi', false),
         enableStream: getChecked('enableStream', true),
         sendPersonalPronounsToAi: getChecked('sendPersonalPronounsToAi', false),
@@ -89,7 +90,18 @@ function applyAiUiState(state) {
     if (!document.getElementById('aiTrope')?.value) setVal('aiTrope', state.trope || '');
     setVal('aiOpeningWordCount', state.openingWordCount);
     setChecked('sendTropeToAi', state.sendTropeToAi);
-    setChecked('includeExistingContentToAi', state.includeExistingContentToAi);
+    // 兼容旧版本：如果只有 includeExistingContentToAi，则同时作为两种内容的默认勾选值
+    const includeExistingLegacy = (state.includeExistingContentToAi !== undefined)
+        ? state.includeExistingContentToAi
+        : true;
+    const sendCharCardToAi = (state.sendCharCardToAi !== undefined)
+        ? state.sendCharCardToAi
+        : includeExistingLegacy;
+    const sendWorldbookToAi = (state.sendWorldbookToAi !== undefined)
+        ? state.sendWorldbookToAi
+        : includeExistingLegacy;
+    setChecked('sendCharCardToAi', sendCharCardToAi);
+    setChecked('sendWorldbookToAi', sendWorldbookToAi);
     setChecked('useNamerPoolForAi', state.useNamerPoolForAi);
     setChecked('enableStream', state.enableStream);
     setChecked('sendPersonalPronounsToAi', state.sendPersonalPronounsToAi);
@@ -503,7 +515,6 @@ function buildOpeningPreview() {
     const xpCore = document.getElementById('aiXpCore')?.value.trim() || '';
     const trope = document.getElementById('aiTrope')?.value.trim() || '';
     const sendTrope = !!document.getElementById('sendTropeToAi')?.checked;
-    const yamlCard = typeof generateYaml === 'function' ? (generateYaml() || '').trim() : '';
     const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
     const wordCount = document.getElementById('aiOpeningWordCount')?.value.trim() || '800-1000字';
     const instructionsEl = document.getElementById('aiInstructionsOpening');
@@ -511,17 +522,15 @@ function buildOpeningPreview() {
     const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
     const pronounsBlock = buildPersonalPronounsBlock();
     const userPortrayalBlock = buildOpeningUserPortrayalBlock();
-    const yamlBlock = yamlCard
-        ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
-        : '';
-    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
+    const charCardBlock = buildCharCardYamlForAi();
+    const worldbookBlock = buildWorldbookJsonForAi();
+    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
 }
 
 function buildAiMessages() {
     const persona = document.getElementById('aiPersona').value.trim();
     const trope = document.getElementById('aiTrope').value.trim();
     const sendTrope = document.getElementById('sendTropeToAi').checked;
-    const includeExistingContent = document.getElementById('includeExistingContentToAi')?.checked;
     const xpCore = document.getElementById('aiXpCore').value.trim();
     const modules = getSelectedModules();
     const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
@@ -544,13 +553,11 @@ function buildAiMessages() {
     let userMsg = '';
 
     if (isOpeningMode()) {
-        const yamlCard = typeof generateYaml === 'function' ? (generateYaml() || '').trim() : '';
         const pronounsBlock = buildPersonalPronounsBlock();
         const userPortrayalBlock = buildOpeningUserPortrayalBlock();
-        const yamlBlock = yamlCard
-            ? `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定来写开场白，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`
-            : '';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${yamlBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
+        const charCardBlock = buildCharCardYamlForAi();
+        const worldbookBlock = buildWorldbookJsonForAi();
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
     } else {
         const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
         const guideTexts = modules.map(m => {
@@ -559,7 +566,7 @@ function buildAiMessages() {
             return guideText ? `【${MODULE_LABELS[m] || m}】${guideText}` : '';
         }).filter(Boolean);
 
-        // ==== 根据子标签选择不同的 JSON schema 与引用内容 ====
+        // ==== 根据子标签选择不同的 JSON schema ====
         // 人设卡：按模块拼出各字段；世界观：统一使用 worldbook 顶层对象结构
         const selectedSchema = (activeTab === AI_SUBTAB_WORLDVIEW)
             ? [MODULE_JSON_SCHEMA.worldbook].filter(Boolean)
@@ -569,20 +576,14 @@ function buildAiMessages() {
         const dynamicInstructions = (instructions || (activeTab === AI_SUBTAB_WORLDVIEW ? AI_WORLDVIEW_INSTRUCTIONS_DEFAULT : AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT))
             + '\n\n' + schemaHeader;
 
-        // 已填内容：人设卡和世界书分别读取自己的表单字段
-        const existingRef = includeExistingContent
-            ? (activeTab === AI_SUBTAB_WORLDVIEW
-                ? buildExistingWorldbookContent()
-                : buildExistingContentForModules(modules))
-            : '';
+        // 人设卡 YAML / 世界书 JSON 作为参考内容，由两个独立复选框控制
+        const charCardBlock = buildCharCardYamlForAi();
+        const worldbookBlock = buildWorldbookJsonForAi();
 
         // 起名参考只用于人设卡子标签
         const namingRef = (activeTab === AI_SUBTAB_WORLDVIEW) ? '' : buildNamerPoolBlock();
-        const existingBlock = existingRef
-            ? `<existing_filled_content>\n以下是表单里已经写好的内容，请优先参考并保持设定一致，在此基础上补全缺失内容：\n${existingRef}\n</existing_filled_content>\n\n`
-            : '';
         const instructionsTag = (activeTab === AI_SUBTAB_WORLDVIEW) ? 'instructions_worldinfo' : 'instructions_char';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${namingRef}${existingBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<reply_json_schema>\n{\n${selectedSchema.join(',\n')}\n}\n</reply_json_schema>\n\n<${instructionsTag}>\n${dynamicInstructions}\n</${instructionsTag}>`;
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${namingRef}${charCardBlock}${worldbookBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<reply_json_schema>\n{\n${selectedSchema.join(',\n')}\n}\n</reply_json_schema>\n\n<${instructionsTag}>\n${dynamicInstructions}\n</${instructionsTag}>`;
     }
 
     return { systemMsg, userMsg, modules };
@@ -693,6 +694,25 @@ function buildExistingWorldbookContent() {
     return JSON.stringify({ worldbook: cleaned }, null, 2);
 }
 
+// 根据复选框状态构建「人设卡 YAML」参考块
+function buildCharCardYamlForAi() {
+    const sendChar = !!document.getElementById('sendCharCardToAi')?.checked;
+    if (!sendChar) return '';
+    if (typeof generateYaml !== 'function') return '';
+    const yamlCard = (generateYaml() || '').trim();
+    if (!yamlCard) return '';
+    return `<character_card_yaml>\n以下是这个角色当前的人设卡 YAML，请严格参考其中设定，避免与既有人设冲突：\n${yamlCard}\n</character_card_yaml>\n\n`;
+}
+
+// 根据复选框状态构建「世界书 JSON」参考块
+function buildWorldbookJsonForAi() {
+    const sendWorld = !!document.getElementById('sendWorldbookToAi')?.checked;
+    if (!sendWorld) return '';
+    const worldbookJson = buildExistingWorldbookContent();
+    if (!worldbookJson) return '';
+    return `<worldbook_json>\n以下是当前世界书内容的 JSON，请参考其中的世界观设定和剧情语境，但不要整段抄录：\n${worldbookJson}\n</worldbook_json>\n\n`;
+}
+
 function updateModulePreview() { updatePromptPreview(); }
 
 function bindModuleCheckboxes() {
@@ -753,7 +773,7 @@ function bindAiSubTabEvents() {
         }
     });
 
-    ['aiPersona', 'aiTrope', 'aiXpCore', 'sendTropeToAi', 'includeExistingContentToAi', 'useNamerPoolForAi', 'sendPersonalPronounsToAi'].forEach(id => {
+    ['aiPersona', 'aiTrope', 'aiXpCore', 'sendTropeToAi', 'sendCharCardToAi', 'sendWorldbookToAi', 'useNamerPoolForAi', 'sendPersonalPronounsToAi'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const eventName = el.type === 'checkbox' ? 'change' : 'input';

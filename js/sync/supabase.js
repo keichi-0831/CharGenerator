@@ -59,7 +59,9 @@ function getCloudMetaConfigSnapshot() {
             instructionsOpening: getVal('aiInstructionsOpening', ''),
             openingWordCount: getVal('aiOpeningWordCount', '800-1000字'),
             sendTropeToAi: getChecked('sendTropeToAi', true),
-            includeExistingContentToAi: getChecked('includeExistingContentToAi', true),
+            // 兼容：旧字段 includeExistingContentToAi 已被拆分为 sendCharCardToAi / sendWorldbookToAi
+            sendCharCardToAi: getChecked('sendCharCardToAi', true),
+            sendWorldbookToAi: getChecked('sendWorldbookToAi', true),
             useNamerPoolForAi: getChecked('useNamerPoolForAi', false),
             enableStream: getChecked('enableStream', true),
             pronouns,
@@ -114,7 +116,18 @@ function applyCloudMetaConfig(cfg) {
                 };
             }
             setChecked('sendTropeToAi', cfg.ai.sendTropeToAi);
-            setChecked('includeExistingContentToAi', cfg.ai.includeExistingContentToAi);
+            // 云配置兼容：如果只有 includeExistingContentToAi，则同时作为两种内容的默认勾选值
+            const includeExistingLegacy = (cfg.ai.includeExistingContentToAi !== undefined)
+                ? cfg.ai.includeExistingContentToAi
+                : true;
+            const sendCharCardToAi = (cfg.ai.sendCharCardToAi !== undefined)
+                ? cfg.ai.sendCharCardToAi
+                : includeExistingLegacy;
+            const sendWorldbookToAi = (cfg.ai.sendWorldbookToAi !== undefined)
+                ? cfg.ai.sendWorldbookToAi
+                : includeExistingLegacy;
+            setChecked('sendCharCardToAi', sendCharCardToAi);
+            setChecked('sendWorldbookToAi', sendWorldbookToAi);
             setChecked('useNamerPoolForAi', cfg.ai.useNamerPoolForAi);
             setChecked('enableStream', cfg.ai.enableStream);
             if (cfg.ai.pronouns && typeof cfg.ai.pronouns === 'object') {
