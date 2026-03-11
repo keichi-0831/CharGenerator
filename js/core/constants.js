@@ -125,16 +125,15 @@ const MODULE_JSON_SCHEMA = {
     nsfw: `  "nsfw": { "experiences":"", "sexual_orientation":"", "sexual_role":[], "sexual_habits":[], "kinks":[], "limits":[] }`,
 
     // worldbook: 预留世界书导出结构（供 AI 子标签 / 将来 YAML 导出使用）
-    worldbook: `  "worldbook": {
-    "statusbar":"",
-    "era_background":"",
-    "special_settings":"",
-    "npcs":[],
-    "frontend_decor":"",
-    "persona_correction":"",
-    "state_specified":"",
-    "extra":""
-  }`,
+    // 注意：这里不再是一个整体的 worldbook 大对象，而是世界书各子模块的 schema 片段，方便按勾选模块动态组合
+    world_statusbar: `  "statusbar": ""`,
+    world_era_background: `  "era_background": ""`,
+    world_special_settings: `  "special_settings": ""`,
+    world_npcs: `  "npcs": []`,
+    world_frontend_decor: `  "frontend_decor": ""`,
+    world_persona_correction: `  "persona_correction": ""`,
+    world_state_specified: `  "state_specified": ""`,
+    world_extra: `  "extra": ""`
 };
 
 // 世界书导出到 SillyTavern JSON 时使用的默认字段（除去用户可配置项）

@@ -567,10 +567,27 @@ function buildAiMessages() {
         }).filter(Boolean);
 
         // ==== 根据子标签选择不同的 JSON schema ====
-        // 人设卡：按模块拼出各字段；世界观：统一使用 worldbook 顶层对象结构
-        const selectedSchema = (activeTab === AI_SUBTAB_WORLDVIEW)
-            ? [MODULE_JSON_SCHEMA.worldbook].filter(Boolean)
-            : modules.map(m => MODULE_JSON_SCHEMA[m] || '').filter(Boolean);
+        // 人设卡：按模块拼出各字段；
+        // 世界观：根据勾选的世界书子模块，动态组合 worldbook 内部结构，
+        //        只包含用户勾选生成的字段，避免 AI 误填未请求部分。
+
+        let selectedSchema = [];
+        if (activeTab === AI_SUBTAB_WORLDVIEW) {
+            const worldbookFields = modules
+                .map(m => MODULE_JSON_SCHEMA[m] || '')
+                .filter(Boolean);
+            if (worldbookFields.length) {
+                // 生成形如："worldbook": { ... } 的整体结构，但内部字段只包含勾选的那些
+                const inner = worldbookFields.join(',\n');
+                selectedSchema = [
+                    `  "worldbook": {\n${inner}\n  }`
+                ];
+            } else {
+                selectedSchema = [];
+            }
+        } else {
+            selectedSchema = modules.map(m => MODULE_JSON_SCHEMA[m] || '').filter(Boolean);
+        }
 
         const schemaHeader = '请严格按照以下 JSON 结构回复，不要包含任何其他文字或 markdown 标记。只需填写被请求的模块，其余留空。';
         const dynamicInstructions = (instructions || (activeTab === AI_SUBTAB_WORLDVIEW ? AI_WORLDVIEW_INSTRUCTIONS_DEFAULT : AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT))
@@ -881,6 +898,9 @@ function extractWorldbookFromText(rawText) {
 
     let obj = tryParse(cleaned);
     if (obj && typeof obj === 'object') {
+        // 兼容两种结构：
+        // 1) { "worldbook": { ... } }
+        // 2) 直接就是 { "statusbar": "...", ... }（万一模型少包了一层）
         if (obj.worldbook && typeof obj.worldbook === 'object') return obj.worldbook;
         const keys = Object.keys(obj);
         const expected = ['statusbar','era_background','special_settings','npcs','frontend_decor','persona_correction','state_specified','extra'];
