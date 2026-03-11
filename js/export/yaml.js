@@ -240,6 +240,18 @@ function generateWorldbookYaml() {
     return yaml;
 }
 
+function previewWorldbookYaml() {
+    // 复用通用 YAML 预览弹窗，展示世界书即将导出的 YAML 内容
+    const previewEl = document.getElementById('yamlPreview');
+    if (previewEl) {
+        previewEl.textContent = generateWorldbookYaml();
+    }
+    const modalEl = document.getElementById('previewModal');
+    if (modalEl) {
+        modalEl.classList.add('active');
+    }
+}
+
 function exportWorldbookYaml() {
     const text = generateWorldbookYaml();
     navigator.clipboard.writeText(text)

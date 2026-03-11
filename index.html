@@ -661,6 +661,7 @@
                 <p style="padding: 10px 0 14px; color: var(--text-sub); font-size:0.9rem;">
                     本页用于记录与整张人设卡相关的<strong>世界观/剧情语境</strong>。所有内容都会与角色卡一起保存在本地和云端，
                     导出 YAML 时也会预留对应结构；任意项目都可以留空不写，将在导出时自动跳过。
+                    <br>触发方式、插入位置和深度等选项仅对导出json生效。
                 </p>
 
                 <!-- 1. 状态栏 -->
@@ -1059,11 +1060,12 @@
                 <div class="export-section" style="margin-top:20px;">
                     <div class="export-header">
                         <h3>世界书导出</h3>
-                        <p>可选择复制 YAML 文本或导出 SillyTavern 世界书 JSON 文件。</p>
+                        <p>可选择预览/复制 YAML 文本，或导出 SillyTavern 世界书 JSON 文件。</p>
                     </div>
                     <div class="export-buttons">
-                        <button type="button" class="btn btn-normal" onclick="exportWorldbookYaml()">📋 复制 YAML（世界书）</button>
-                        <button type="button" class="btn btn-export-main" onclick="exportWorldbookJson()">💾 导出 JSON（世界书）</button>
+                        <button type="button" class="btn btn-normal" onclick="previewWorldbookYaml()">预览世界书 YAML</button>
+                        <button type="button" class="btn btn-normal" onclick="exportWorldbookYaml()">复制世界书 YAML</button>
+                        <button type="button" class="btn btn-export-main" onclick="exportWorldbookJson()">导出世界书 JSON</button>
                     </div>
                 </div>
             </div>
