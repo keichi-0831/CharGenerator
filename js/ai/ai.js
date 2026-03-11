@@ -1168,7 +1168,37 @@ function fillFormFromAI() {
         if (d.statusbar !== undefined) { setVal('world_statusbar', d.statusbar); filled.push('状态栏'); }
         if (d.era_background !== undefined) { setVal('world_era_background', d.era_background); filled.push('时代背景'); }
         if (d.special_settings !== undefined) { setVal('world_special_settings', d.special_settings); filled.push('特殊设定'); }
-        if (Array.isArray(d.npcs)) { fillArray('world_npc-container', 'world_npc-item', d.npcs, true); filled.push('NPCs'); }
+
+        // NPCs：兼容 AI 返回字符串数组或对象数组两种形式
+        // 例如：
+        // "npcs": [
+        //   { "name": "许承明", "relation": "…", "function": "…", "traits": "…" },
+        //   ...
+        // ]
+        if (Array.isArray(d.npcs)) {
+            const npcTexts = d.npcs
+                .map(n => {
+                    if (!n) return '';
+                    if (typeof n === 'string') return n; // 旧格式：直接就是一段描述
+                    if (typeof n === 'object') {
+                        const lines = [];
+                        if (n.name) lines.push(`【姓名】${n.name}`);
+                        if (n.relation) lines.push(`【关系】${n.relation}`);
+                        if (n.function) lines.push(`【作用】${n.function}`);
+                        if (n.traits) lines.push(`【特征】${n.traits}`);
+                        const text = lines.join('\n').trim();
+                        return text || '';
+                    }
+                    return '';
+                })
+                .filter(Boolean);
+
+            if (npcTexts.length) {
+                fillArray('world_npc-container', 'world_npc-item', npcTexts, true);
+                filled.push('NPCs');
+            }
+        }
+
         if (d.frontend_decor !== undefined) { setVal('world_frontend_decor', d.frontend_decor); filled.push('前端美化'); }
         if (d.persona_correction !== undefined) { setVal('world_persona_correction', d.persona_correction); filled.push('人设纠偏'); }
         if (d.state_specified !== undefined) { setVal('world_state_specified', d.state_specified); filled.push('指定状态'); }
