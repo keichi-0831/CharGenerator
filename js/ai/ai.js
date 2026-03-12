@@ -33,15 +33,19 @@ function collectAiUiState() {
     ['basic','background','appearance','personality','user_relation','behavior','speech','extra','nsfw',
      // 世界书各模块（世界观子标签）
      'world_statusbar','world_era_background','world_special_settings','world_npcs',
-     'world_frontend_decor','world_persona_correction','world_state_specified','world_extra'
+     'world_frontend_decor','world_persona_correction','world_state_specified','world_extra',
+     // user 人设各模块
+     'basic_user','personality_user','relation_user','preference_user','NSFW_user'
     ].forEach(k => {
         moduleGuides[k] = getVal('guide_' + k, '');
     });
     moduleGuides.opening_scene = getVal('guide_opening_scene', '');
+    moduleGuides.about_me = getVal('guide_about_me', '');
 
     const instructionDrafts = {
         [AI_SUBTAB_PERSONA_CARD]: getVal('aiInstructionsChar', AppState.aiInstructionDrafts?.[AI_SUBTAB_PERSONA_CARD] || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT),
         [AI_SUBTAB_WORLDVIEW]: getVal('aiInstructionsWorld', AppState.aiInstructionDrafts?.[AI_SUBTAB_WORLDVIEW] || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT),
+        [AI_SUBTAB_USER_PERSONA]: getVal('aiInstructionsUser', AppState.aiInstructionDrafts?.[AI_SUBTAB_USER_PERSONA] || AI_USER_PERSONA_INSTRUCTIONS_DEFAULT),
         [AI_SUBTAB_OPENING]: getVal('aiInstructionsOpening', AppState.aiInstructionDrafts?.[AI_SUBTAB_OPENING] || AI_OPENING_INSTRUCTIONS_DEFAULT)
     };
 
@@ -143,6 +147,9 @@ function applyAiUiState(state) {
         [AI_SUBTAB_WORLDVIEW]: draftsFromState[AI_SUBTAB_WORLDVIEW]
             || state.instructionsWorld
             || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT,
+        [AI_SUBTAB_USER_PERSONA]: draftsFromState[AI_SUBTAB_USER_PERSONA]
+            || state.instructionsUser
+            || AI_USER_PERSONA_INSTRUCTIONS_DEFAULT,
         [AI_SUBTAB_OPENING]: draftsFromState[AI_SUBTAB_OPENING]
             || state.instructionsOpening
             || AI_OPENING_INSTRUCTIONS_DEFAULT
@@ -154,6 +161,8 @@ function applyAiUiState(state) {
     if (insCharEl) insCharEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_PERSONA_CARD] || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT;
     const insWorldEl = document.getElementById('aiInstructionsWorld');
     if (insWorldEl) insWorldEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_WORLDVIEW] || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT;
+    const insUserEl = document.getElementById('aiInstructionsUser');
+    if (insUserEl) insUserEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_USER_PERSONA] || AI_USER_PERSONA_INSTRUCTIONS_DEFAULT;
     const insOpeningEl = document.getElementById('aiInstructionsOpening');
     if (insOpeningEl) insOpeningEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_OPENING] || AI_OPENING_INSTRUCTIONS_DEFAULT;
 }
@@ -432,7 +441,7 @@ function refreshAiCacheDisplay() {
         resultContent.textContent = '';
         badges.innerHTML = '';
         if (generateStatusEl) generateStatusEl.textContent = '';
-        if (fillBtn) fillBtn.style.display = isOpeningMode() ? 'none' : '';
+        if (fillBtn) fillBtn.style.display = (isOpeningMode() || isUserPersonaMode()) ? 'none' : '';
         return;
     }
 
@@ -447,6 +456,10 @@ function refreshAiCacheDisplay() {
 
 function isOpeningMode() {
     return getActiveAiSubtab() === AI_SUBTAB_OPENING;
+}
+
+function isUserPersonaMode() {
+    return getActiveAiSubtab() === AI_SUBTAB_USER_PERSONA;
 }
 
 function getSelectedPronoun(role) {
@@ -488,6 +501,7 @@ function updateAiInstructionsByActiveTab(force = false) {
     const map = {
         [AI_SUBTAB_PERSONA_CARD]: { id: 'aiInstructionsChar', def: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT },
         [AI_SUBTAB_WORLDVIEW]: { id: 'aiInstructionsWorld', def: AI_WORLDVIEW_INSTRUCTIONS_DEFAULT },
+        [AI_SUBTAB_USER_PERSONA]: { id: 'aiInstructionsUser', def: AI_USER_PERSONA_INSTRUCTIONS_DEFAULT },
         [AI_SUBTAB_OPENING]: { id: 'aiInstructionsOpening', def: AI_OPENING_INSTRUCTIONS_DEFAULT }
     };
     Object.entries(map).forEach(([tabKey, cfg]) => {
@@ -506,9 +520,10 @@ function syncAiTabUI() {
     const previewTitle = document.getElementById('aiPreviewTitle');
     const fillBtn = document.querySelector('.btn-ai-fill');
     const isOpening = isOpeningMode();
+    const isUserPersona = isUserPersonaMode();
     if (namingPoolOption) namingPoolOption.style.display = isOpening ? 'none' : '';
     if (previewTitle) previewTitle.textContent = '📋 本次将发送的消息预览';
-    if (fillBtn) fillBtn.style.display = isOpening ? 'none' : '';
+    if (fillBtn) fillBtn.style.display = (isOpening || isUserPersona) ? 'none' : '';
 }
 
 function buildOpeningPreview() {
@@ -534,6 +549,7 @@ function buildAiMessages() {
     const xpCore = document.getElementById('aiXpCore').value.trim();
     const modules = getSelectedModules();
     const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
+    const aboutMe = document.getElementById('guide_about_me')?.value.trim() || '';
     const wordCount = document.getElementById('aiOpeningWordCount')?.value.trim() || '800-1000字';
     const activeTab = getActiveAiSubtab();
     let instructions = '';
@@ -543,6 +559,9 @@ function buildAiMessages() {
     } else if (activeTab === AI_SUBTAB_WORLDVIEW) {
         const el = document.getElementById('aiInstructionsWorld');
         instructions = el?.value.trim() || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT;
+    } else if (activeTab === AI_SUBTAB_USER_PERSONA) {
+        const el = document.getElementById('aiInstructionsUser');
+        instructions = el?.value.trim() || AI_USER_PERSONA_INSTRUCTIONS_DEFAULT;
     } else if (activeTab === AI_SUBTAB_OPENING) {
         const el = document.getElementById('aiInstructionsOpening');
         instructions = el?.value.trim() || AI_OPENING_INSTRUCTIONS_DEFAULT;
@@ -558,6 +577,16 @@ function buildAiMessages() {
         const charCardBlock = buildCharCardYamlForAi();
         const worldbookBlock = buildWorldbookJsonForAi();
         userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
+    } else if (isUserPersonaMode()) {
+        const guideTexts = modules.map(m => {
+            const guideEl = document.getElementById('guide_' + m);
+            const guideText = guideEl ? guideEl.value.trim() : '';
+            return guideText ? `${MODULE_JSON_SCHEMA[m] || `<${m}></${m}>`}\n${guideText}` : '';
+        }).filter(Boolean);
+
+        const charCardBlock = buildCharCardYamlForAi();
+        const worldbookBlock = buildWorldbookJsonForAi();
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}<about_me>\n${aboutMe}\n</about_me>\n\n<requested_modules>\n${modules.join('、')}\n</requested_modules>\n\n<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<instructiongs_user>\n${instructions}\n</instructiongs_user>`;
     } else {
         const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
         const guideTexts = modules.map(m => {
@@ -764,6 +793,7 @@ function bindAiSubTabEvents() {
     const instructionsMap = [
         [AI_SUBTAB_PERSONA_CARD, 'aiInstructionsChar'],
         [AI_SUBTAB_WORLDVIEW, 'aiInstructionsWorld'],
+        [AI_SUBTAB_USER_PERSONA, 'aiInstructionsUser'],
         [AI_SUBTAB_OPENING, 'aiInstructionsOpening']
     ];
     instructionsMap.forEach(([tabKey, elId]) => {
@@ -778,12 +808,12 @@ function bindAiSubTabEvents() {
         });
     });
 
-    ['guide_opening_scene', 'aiOpeningWordCount', 'aiXpCore'].forEach(id => {
+    ['guide_opening_scene', 'guide_about_me', 'aiOpeningWordCount', 'aiXpCore'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', () => {
                 persistAiUiState();
-                if (isOpeningMode()) updateModulePreview();
+                if (isOpeningMode() || isUserPersonaMode()) updateModulePreview();
                 updatePromptPreview();
                 scheduleCloudConfigSync();
             });
@@ -964,12 +994,14 @@ async function generateWithAI() {
     const { systemMsg, userMsg, modules } = buildAiMessages();
     const useStream = document.getElementById('enableStream').checked;
     const openingScene = document.getElementById('guide_opening_scene')?.value.trim() || '';
+    const aboutMe = document.getElementById('guide_about_me')?.value.trim() || '';
 
     if (!baseUrl) { showToast('请先填写 API 地址'); return; }
     if (!AppState.selectedModel) { showToast('请先获取并选择一个模型'); return; }
     if (!xpCore) { showToast('请填写"这次我想要…"'); return; }
     if (!isOpeningMode() && modules.length === 0) { showToast('请至少勾选一个生成模块'); return; }
     if (isOpeningMode() && !openingScene) { showToast('请填写开场白需求描述'); return; }
+    if (isUserPersonaMode() && !aboutMe) { showToast('请先填写 <about_me>，简单描述你想要的 user'); return; }
 
     const tabKey = getActiveAiSubtab();
     // 记录本次请求使用的 system / user 消息，供“继续生成”复用
@@ -1201,6 +1233,12 @@ function processAiResult(raw, modules) {
         AppState.aiLastJson = null;
         showAiResult(raw, []);
         setAiStatus('✅ 开场白生成成功！', 'success');
+        return;
+    }
+    if (isUserPersonaMode()) {
+        AppState.aiLastJson = null;
+        showAiResult(raw, modules);
+        setAiStatus('✅ user 人设生成成功！', 'success');
         return;
     }
     if (tabKey === AI_SUBTAB_WORLDVIEW) AppState.aiLastJson = extractWorldbookFromText(raw);

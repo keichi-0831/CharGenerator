@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人设卡生成器</title>
+    <title>AAAchar速食小炒批发</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
         <link rel="stylesheet" href="style.css?v=20260310b">
 </head>
 <body>
 <div class="container">
     <header>
-        <h1>人设卡生成器</h1>
+        <h1>AAAchar速食小炒批发</h1>
         <p>Day Mode · YAML Generator</p>
     </header>
 
@@ -1267,6 +1267,7 @@
                         <div class="ai-subtabs-nav">
                             <button type="button" class="ai-subtab-btn active" data-ai-tab="persona-card">人设卡</button>
                             <button type="button" class="ai-subtab-btn" data-ai-tab="worldview">世界观</button>
+                            <button type="button" class="ai-subtab-btn" data-ai-tab="user-persona">user人设</button>
                             <button type="button" class="ai-subtab-btn" data-ai-tab="opening">开场白</button>
                         </div>
 
@@ -1622,6 +1623,91 @@
                                 <div class="ai-guide-body">
                                     <div class="ai-guide-hint">用于告诉 AI 这段开场白的整体风格与节奏偏好：叙事视角、文风轻重、对话与描写的比例、是否保留留白、需要避开的情节处理方式等。默认内容提供一套通用的开场白写作要求，你可以按自己的口味进行调整。</div>
                                     <textarea id="aiInstructionsOpening" rows="6"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ai-subtab-panel" id="ai-subtab-user-persona">
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="radio" name="aiUserPersonaRequired" checked disabled>
+                                    <span class="guide-tag">about_me</span>
+                                    <span class="guide-title">user 简述（必填）</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">请简单描述你想要的 user 是什么样的人：身份、年龄感、与 {{char}} 的关系位置、性格气质、你想让 TA 在故事里承担的作用等。这里会以 <code>&lt;about_me&gt;</code> 标签发送给 AI，作为 user 人设的核心锚点。</div>
+                                    <textarea id="guide_about_me" rows="5" placeholder="例如：我想要一个二十多岁的普通上班族 user，性格温吞、有点迟钝，但在亲密关系里很会包容人。和 {{char}} 是重逢后的暧昧对象，希望 user 不是特别强势，整体偏温柔、日常向。">我想要的 user 是：</textarea>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="basic_user" data-ai-tab="user-persona" checked>
+                                    <span class="guide-tag">basic_user</span>
+                                    <span class="guide-title">基础信息</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">让 AI 生成 user 的基础轮廓，尽量简洁，避免喧宾夺主。</div>
+                                    <textarea id="guide_basic_user">请根据 <about_me> 和当前 char 设定，为 user 生成简洁但有辨识度的基础信息：一个有辨识度的中文名和英文/拼音名、合理的年龄与生日星座、性别、身高。可包含年龄感、身份/职业、外在给人的第一印象、与 {{char}} 故事里最关键的定位。保持轻量，适合作为 user 人设卡开头。</textarea>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="personality_user" data-ai-tab="user-persona" checked>
+                                    <span class="guide-tag">personality_user</span>
+                                    <span class="guide-title">性格特质</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">生成 user 的核心性格、优缺点与情感反应方式。</div>
+                                    <textarea id="guide_personality_user">请为 user 设计简洁明确的性格特质：核心性格、关系中的相处方式、优点、缺点、情绪触发点。不要写得比 char 更复杂，但要足够支撑互动张力。</textarea>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="relation_user" data-ai-tab="user-persona" checked>
+                                    <span class="guide-tag">relation_user</span>
+                                    <span class="guide-title">与 {{char}} 的关系定位</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">强调 user 在关系中的视角、立场、需求与对 {{char}} 的态度。</div>
+                                    <textarea id="guide_relation_user">请从 user 视角整理与 {{char}} 的关系定位：双方目前是什么关系、user 如何看待 {{char}}、user 在这段关系里最在意什么、最容易被 {{char}} 触动或刺痛的点是什么。适合以简短 YAML 字段表达。</textarea>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="preference_user" data-ai-tab="user-persona">
+                                    <span class="guide-tag">preference_user</span>
+                                    <span class="guide-title">喜好与边界</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">补充 user 的偏好、雷点、舒适区与关系边界。</div>
+                                    <textarea id="guide_preference_user">请补充 user 的喜好、讨厌的事、舒适区、关系边界与底线。尽量围绕与 {{char}} 的互动来写，便于后续跑卡时参考。</textarea>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="checkbox" name="aiModule" value="NSFW_user" data-ai-tab="user-persona">
+                                    <span class="guide-tag">NSFW_user</span>
+                                    <span class="guide-title">🔞 NSFW</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">仅在需要时补充成人向语境下的 user 偏好与边界。</div>
+                                    <textarea id="guide_NSFW_user">请在成人向虚构语境下，为 user 补充简洁的 NSFW 倾向设定：接受度、偏好、雷区、在亲密关系中的反应风格。保持结构化、克制，不要过度铺写。</textarea>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header" for="aiInstructionsUser" style="cursor:default;">
+                                    <span class="guide-tag">instructiongs_user</span>
+                                    <span class="guide-title">user 人设填卡说明（可自定义）</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">用于指导 AI 根据对 char role 的描述生成简单的 user 人设，回复请使用 YAML 格式，并将每个模块放在对应的 <code>&lt;*_user&gt;</code> 标签中。</div>
+                                    <textarea id="aiInstructionsUser" rows="7"></textarea>
                                 </div>
                             </div>
                         </div>

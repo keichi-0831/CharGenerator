@@ -17,10 +17,12 @@ function getCloudMetaConfigSnapshot() {
     });
 
     const moduleGuides = {};
-    ['basic','background','appearance','personality','user_relation','behavior','speech','extra','nsfw'].forEach(k => {
+    ['basic','background','appearance','personality','user_relation','behavior','speech','extra','nsfw',
+     'basic_user','personality_user','relation_user','preference_user','NSFW_user'].forEach(k => {
         moduleGuides[k] = getVal('guide_' + k, '');
     });
     moduleGuides.opening_scene = getVal('guide_opening_scene', '');
+    moduleGuides.about_me = getVal('guide_about_me', '');
 
     const pronouns = {
         sendPersonalPronounsToAi: getChecked('sendPersonalPronounsToAi', false),
@@ -56,6 +58,7 @@ function getCloudMetaConfigSnapshot() {
             xpCore: getVal('aiXpCore', ''),
             instructionsChar: getVal('aiInstructionsChar', ''),
             instructionsWorld: getVal('aiInstructionsWorld', ''),
+            instructionsUser: getVal('aiInstructionsUser', ''),
             instructionsOpening: getVal('aiInstructionsOpening', ''),
             openingWordCount: getVal('aiOpeningWordCount', '800-1000字'),
             sendTropeToAi: getChecked('sendTropeToAi', true),
@@ -105,12 +108,14 @@ function applyCloudMetaConfig(cfg) {
             setVal('aiTrope', cfg.ai.trope);
             setVal('aiInstructionsChar', cfg.ai.instructionsChar);
             setVal('aiInstructionsWorld', cfg.ai.instructionsWorld);
+            setVal('aiInstructionsUser', cfg.ai.instructionsUser);
             setVal('aiInstructionsOpening', cfg.ai.instructionsOpening);
             setVal('aiOpeningWordCount', cfg.ai.openingWordCount);
             if (cfg.ai.instructionDrafts && typeof cfg.ai.instructionDrafts === 'object') {
                 AppState.aiInstructionDrafts = {
                     [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
                     [AI_SUBTAB_WORLDVIEW]: AI_WORLDVIEW_INSTRUCTIONS_DEFAULT,
+                    [AI_SUBTAB_USER_PERSONA]: AI_USER_PERSONA_INSTRUCTIONS_DEFAULT,
                     [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT,
                     ...cfg.ai.instructionDrafts
                 };
