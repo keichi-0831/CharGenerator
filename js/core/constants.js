@@ -216,6 +216,9 @@ window.AppState = window.AppState || {
     aiLastJson: null,
     aiLastModules: [],
     aiActiveSubtab: AI_SUBTAB_PERSONA_CARD,
+    // 记录每个 AI 子标签最近一次请求时使用的 system / user 消息，供“继续生成”功能复用
+    aiLastSystemMsgs: {},
+    aiLastUserMsgs: {},
     aiInstructionDrafts: {
         [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
         [AI_SUBTAB_WORLDVIEW]: AI_WORLDVIEW_INSTRUCTIONS_DEFAULT,

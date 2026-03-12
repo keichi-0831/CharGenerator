@@ -982,6 +982,9 @@
         .btn-ai-generate:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
         .btn-ai-stop { padding: 12px 24px; background: #fff0f0; color: #d63031; border: 1px solid #fab1a0; border-radius: 30px; cursor: pointer; font-size: 0.95rem; font-weight: 700; transition: all 0.2s; white-space: nowrap; }
         .btn-ai-stop:hover { background: #ffe0e0; transform: translateY(-1px); }
+        .btn-ai-continue { padding: 12px 24px; background: #f0f0f0; color: var(--text-main); border: 1px solid var(--border-color); border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: 700; transition: all 0.2s; white-space: nowrap; }
+        .btn-ai-continue:hover { background: #e0e0e0; transform: translateY(-1px); }
+        .btn-ai-continue:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
         .ai-status-text { font-size: 0.85rem; color: var(--text-sub); }
         .ai-status-text.error { color: #e17055; }
         .ai-status-text.success { color: #00b894; }

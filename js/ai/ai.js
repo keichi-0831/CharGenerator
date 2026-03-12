@@ -943,6 +943,8 @@ function setGenerateUiState(isGenerating) {
     const stopBtn = document.getElementById('btnStopGenerate');
     if (btn) btn.disabled = !!isGenerating;
     if (stopBtn) stopBtn.style.display = isGenerating ? '' : 'none';
+    const continueBtn = document.getElementById('btnContinueGenerate');
+    if (continueBtn) continueBtn.disabled = !!isGenerating;
 }
 
 function stopGenerateAI() {
@@ -969,6 +971,13 @@ async function generateWithAI() {
     if (!isOpeningMode() && modules.length === 0) { showToast('请至少勾选一个生成模块'); return; }
     if (isOpeningMode() && !openingScene) { showToast('请填写开场白需求描述'); return; }
 
+    const tabKey = getActiveAiSubtab();
+    // 记录本次请求使用的 system / user 消息，供“继续生成”复用
+    AppState.aiLastSystemMsgs = AppState.aiLastSystemMsgs || {}; 
+    AppState.aiLastUserMsgs = AppState.aiLastUserMsgs || {};
+    AppState.aiLastSystemMsgs[tabKey] = systemMsg;
+    AppState.aiLastUserMsgs[tabKey] = userMsg;
+
     setGenerateUiState(true);
     setAiStatus('⏳ 生成中，请稍候…', '');
     document.getElementById('aiResultSection').style.display = 'none';
@@ -978,9 +987,27 @@ async function generateWithAI() {
     const rawReplyContent = document.getElementById('aiRawReplyContent');
     rawReplyContent.textContent = '⏳ 等待AI回复…';
 
+    // 开始新一轮生成前，先隐藏“继续生成”按钮，避免误操作
+    const continueBtn = document.getElementById('btnContinueGenerate');
+    if (continueBtn) {
+        continueBtn.style.display = 'none';
+        continueBtn.disabled = true;
+    }
+
     try {
-        if (useStream) await generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyContent);
-        else await generateNonStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyContent);
+        let raw = '';
+        if (useStream) raw = await generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyContent);
+        else raw = await generateNonStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyContent);
+
+        if (raw && raw.trim()) {
+            processAiResult(raw, modules);
+            if (continueBtn) {
+                continueBtn.style.display = '';
+                continueBtn.disabled = false;
+            }
+        } else {
+            setAiStatus('⚠️ 未收到任何内容', 'error');
+        }
     } catch (err) {
         console.error('[AI Generate Error]', err);
         setAiStatus(`❌ 出错：${err.message}`, 'error');
@@ -990,7 +1017,86 @@ async function generateWithAI() {
     }
 }
 
-async function generateNonStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyEl) {
+// 基于上一次请求与回复进行续写
+async function continueGenerateWithAI() {
+    const baseUrl = document.getElementById('aiBaseUrl').value.trim().replace(/\/+$/, '');
+    const apiKey = document.getElementById('aiApiKey').value.trim();
+    const useStream = document.getElementById('enableStream')?.checked;
+    const tabKey = getActiveAiSubtab();
+
+    if (!baseUrl) { showToast('请先填写 API 地址'); return; }
+    if (!AppState.selectedModel) { showToast('请先获取并选择一个模型'); return; }
+
+    const lastSystem = AppState.aiLastSystemMsgs?.[tabKey];
+    const lastUser = AppState.aiLastUserMsgs?.[tabKey];
+    if (!lastSystem || !lastUser) {
+        showToast('当前没有可续写的请求，请先点击“AI 开始生成”完成一次生成。');
+        return;
+    }
+
+    const rawReplySection = document.getElementById('aiRawReplySection');
+    const rawReplyContent = document.getElementById('aiRawReplyContent');
+    if (!rawReplySection || !rawReplyContent) return;
+
+    // 读取上一条回复文本 & 模块信息
+    const cache = typeof getCurrentCharAiCache === 'function' ? getCurrentCharAiCache(tabKey) : null;
+    const normalizedCache = normalizeAiCacheEntry(cache, tabKey);
+    const prevRaw = (normalizedCache && normalizedCache.raw) 
+        ? String(normalizedCache.raw)
+        : String(rawReplyContent.textContent || '');
+    const modules = (normalizedCache && Array.isArray(normalizedCache.modules) && normalizedCache.modules.length)
+        ? normalizedCache.modules
+        : (AppState.aiLastModules || []);
+
+    if (!prevRaw.trim()) {
+        showToast('当前没有上一条 AI 回复内容，无法续写。');
+        return;
+    }
+
+    const CONTINUE_SYSTEM_MSG = '上一条消息被截断了。请严格从中断的地方继续生成，不要重复前面的任何内容。';
+    const messages = [
+        { role: 'system', content: lastSystem },
+        { role: 'user', content: lastUser },
+        { role: 'assistant', content: prevRaw },
+        { role: 'system', content: CONTINUE_SYSTEM_MSG }
+    ];
+
+    setGenerateUiState(true);
+    setAiStatus('⏳ 正在续写，请稍候…', '');
+    rawReplySection.style.display = '';
+
+    const continueBtn = document.getElementById('btnContinueGenerate');
+    if (continueBtn) continueBtn.disabled = true;
+
+    try {
+        let newRaw = '';
+        if (useStream) newRaw = await generateStream(baseUrl, apiKey, null, null, modules, rawReplyContent, messages);
+        else newRaw = await generateNonStream(baseUrl, apiKey, null, null, modules, rawReplyContent, messages);
+
+        if (newRaw && newRaw.trim()) {
+            const concatenated = prevRaw + newRaw;
+            rawReplyContent.textContent = concatenated;
+            rawReplyContent.scrollTop = rawReplyContent.scrollHeight;
+            processAiResult(concatenated, modules);
+            if (continueBtn) {
+                continueBtn.style.display = '';
+                continueBtn.disabled = false;
+            }
+        } else {
+            setAiStatus('⚠️ 续写请求未返回任何新内容', 'error');
+            if (continueBtn) continueBtn.disabled = false;
+        }
+    } catch (err) {
+        console.error('[AI Continue Error]', err);
+        setAiStatus(`❌ 续写出错：${err.message}`, 'error');
+        if (continueBtn) continueBtn.disabled = false;
+    } finally {
+        setGenerateUiState(false);
+        AppState.currentAbortController = null;
+    }
+}
+
+async function generateNonStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyEl, overrideMessages) {
     let res;
     try {
         res = await fetch(`${baseUrl}/v1/chat/completions`, {
@@ -998,7 +1104,9 @@ async function generateNonStream(baseUrl, apiKey, systemMsg, userMsg, modules, r
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
                 model: AppState.selectedModel,
-                messages: [{ role: 'system', content: systemMsg }, { role: 'user', content: userMsg }],
+                messages: (overrideMessages && Array.isArray(overrideMessages) && overrideMessages.length)
+                    ? overrideMessages
+                    : [{ role: 'system', content: systemMsg }, { role: 'user', content: userMsg }],
                 temperature: 0.85,
                 stream: false
             })
@@ -1016,10 +1124,10 @@ async function generateNonStream(baseUrl, apiKey, systemMsg, userMsg, modules, r
     const raw = data.choices?.[0]?.message?.content || '';
     if (!raw) throw new Error('API返回的choices为空');
     rawReplyEl.textContent = raw;
-    processAiResult(raw, modules);
+    return raw;
 }
 
-async function generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyEl) {
+async function generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawReplyEl, overrideMessages) {
     AppState.currentAbortController = new AbortController();
     let res;
     try {
@@ -1028,7 +1136,9 @@ async function generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawR
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
                 model: AppState.selectedModel,
-                messages: [{ role: 'system', content: systemMsg }, { role: 'user', content: userMsg }],
+                messages: (overrideMessages && Array.isArray(overrideMessages) && overrideMessages.length)
+                    ? overrideMessages
+                    : [{ role: 'system', content: systemMsg }, { role: 'user', content: userMsg }],
                 temperature: 0.85,
                 stream: true
             }),
@@ -1077,10 +1187,9 @@ async function generateStream(baseUrl, apiKey, systemMsg, userMsg, modules, rawR
     }
     if (fullText) {
         rawReplyEl.textContent = fullText;
-        processAiResult(fullText, modules);
-    } else {
-        setAiStatus('⚠️ 未收到任何内容', 'error');
+        return fullText;
     }
+    return '';
 }
 
 function processAiResult(raw, modules) {
