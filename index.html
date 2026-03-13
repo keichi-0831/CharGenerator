@@ -1269,6 +1269,7 @@
                             <button type="button" class="ai-subtab-btn" data-ai-tab="worldview">世界观</button>
                             <button type="button" class="ai-subtab-btn" data-ai-tab="user-persona">user人设</button>
                             <button type="button" class="ai-subtab-btn" data-ai-tab="opening">开场白</button>
+                            <button type="button" class="ai-subtab-btn" data-ai-tab="frontend-decor">前端美化</button>
                         </div>
 
                         <div class="ai-subtab-panel active" id="ai-subtab-persona-card">
@@ -1561,6 +1562,23 @@
 
                             <div class="ai-guide-module">
                                 <label class="ai-guide-header" style="cursor:default;">
+                                    <span class="guide-tag">UserPortrayal</span>
+                                    <span class="guide-title">是否允许描写 {{user}}</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">控制开场白里是否允许 AI 直接描写 {{user}} 的言行、反应和心理活动。若关闭，AI 只能写 {{char}}、环境与客观可见信息。</div>
+                                    <div class="pronoun-grid">
+                                        <div class="pronoun-role-card">
+                                            <div class="pronoun-role-title">{{user}} 描写策略</div>
+                                            <label><input type="radio" name="openingUserPortrayalMode" value="disallow" checked> 禁止描写 {{user}}</label>
+                                            <label><input type="radio" name="openingUserPortrayalMode" value="allow"> 允许适度描写 {{user}}</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header" style="cursor:default;">
                                     <span class="guide-tag">PersonalPronouns</span>
                                     <span class="guide-title">开场白人称偏好（可选发送给 AI）</span>
                                 </label>
@@ -1582,23 +1600,6 @@
                                             <label><input type="radio" name="userPronounMode" value="first"> 第一人称</label>
                                             <label><input type="radio" name="userPronounMode" value="second" checked> 第二人称</label>
                                             <label><input type="radio" name="userPronounMode" value="third"> 第三人称（{{user}}）</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="ai-guide-module">
-                                <label class="ai-guide-header" style="cursor:default;">
-                                    <span class="guide-tag">UserPortrayal</span>
-                                    <span class="guide-title">抢话设置</span>
-                                </label>
-                                <div class="ai-guide-body">
-                                    <div class="ai-guide-hint">选“抢话”时，会发送当前允许描写 {{user}} 的 prompt；选“不抢话”时，会严令禁止 AI 描写 {{user}} 的任何言行举止和心理活动。</div>
-                                    <div class="pronoun-grid">
-                                        <div class="pronoun-role-card">
-                                            <div class="pronoun-role-title">UserPortrayal</div>
-                                            <label><input type="radio" name="openingUserPortrayalMode" value="allow"> 抢话</label>
-                                            <label><input type="radio" name="openingUserPortrayalMode" value="disallow" checked> 不抢话</label>
                                         </div>
                                     </div>
                                 </div>
@@ -1711,6 +1712,34 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="ai-subtab-panel" id="ai-subtab-frontend-decor">
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header">
+                                    <input type="radio" name="aiFrontendDecorRequired" checked disabled>
+                                    <span class="guide-tag">status_style</span>
+                                    <span class="guide-title">状态栏风格说明</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">请描述这次想要的状态栏整体气质与字段内容。建议说明：要贴合怎样的 char 人设卡风格、希望保留哪些信息（如时间、地点、天气、char 当前穿着/姿态/情绪/关系状态等）、想做成什么界面氛围。</div>
+                                    <textarea id="guide_status_style" rows="5" placeholder="例如：想要偏 char 人设卡的状态栏，整体是冷淡暧昧的都市夜雨风。请包含时间、地点、天气、char 当前穿着、姿态、表层情绪、隐秘心绪、和 {{user}} 的关系温度，排版像信息卡/状态栏，不要太像游戏数值面板。">请按照 char 的整体气质、人设风格和当前世界观语境，设计一套最合适的状态栏。
+状态栏至少包含：日期、周几、天气、地点、char 当前穿着。
+也请尽量结合情境补充：时间段、姿态/动作、表层情绪、隐秘心绪、与 {{user}} 的关系温度或互动氛围等信息。
+整体排版希望像贴合角色风格的状态卡 / 信息栏，简洁、有画面感，不要做成冷冰冰的游戏数值面板。</textarea>
+                                </div>
+                            </div>
+
+                            <div class="ai-guide-module">
+                                <label class="ai-guide-header" for="aiInstructionsStatus" style="cursor:default;">
+                                    <span class="guide-tag">instructions_status</span>
+                                    <span class="guide-title">状态栏美化说明（可自定义）</span>
+                                </label>
+                                <div class="ai-guide-body">
+                                    <div class="ai-guide-hint">用于指导 AI 输出美化需要的正则、HTML/CSS 和提示词。必须要求输出 JSON。</div>
+                                    <textarea id="aiInstructionsStatus" rows="18"></textarea>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1756,6 +1785,30 @@
                         <button type="button" class="btn-copy-small" onclick="copyRawReply()">📋 复制</button>
                     </div>
                     <div class="ai-raw-reply-content" id="aiRawReplyContent">等待生成…</div>
+                </div>
+            </div>
+
+            <!-- 美化结果区域（默认隐藏） -->
+            <div class="card-section" id="aiDecorResultSection" style="display:none">
+                <div class="section-header">
+                    <div class="section-icon">🎨</div>
+                    <h2>状态栏美化结果预览</h2>
+                </div>
+                <div class="decor-actions" style="margin-bottom: 12px; display: flex; gap: 10px;">
+                    <button type="button" class="btn-normal" onclick="copyDecorPrompt()">📋 复制状态栏提示词</button>
+                    <button type="button" class="btn-normal" onclick="importDecorPromptToWorldStatusbar()">📥 导入到世界书 → 状态栏</button>
+                    <button type="button" class="btn-export-main" onclick="downloadDecorJson()">📥 下载美化正则 (.json)</button>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:6px;">状态栏提示词预览（来自 <code>&lt;status_prompt&gt;</code>）</div>
+                    <div id="decorPromptPreviewArea" style="padding:12px;border:1px solid var(--border-color);border-radius:8px;background:#fafafa;white-space:pre-wrap;line-height:1.7;font-size:0.88rem;color:var(--text-main);max-height:220px;overflow:auto;"></div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <div style="font-size:0.82rem;color:var(--text-sub);margin-bottom:6px;">正则 JSON 预览（来自 <code>&lt;status_regex&gt;</code>）</div>
+                    <div id="decorRegexPreviewArea" style="padding:12px;border:1px solid var(--border-color);border-radius:8px;background:#fafafa;white-space:pre-wrap;line-height:1.6;font-size:0.82rem;font-family:Consolas,monospace;color:var(--text-main);max-height:220px;overflow:auto;"></div>
+                </div>
+                <div class="decor-preview-area" id="decorPreviewArea" style="padding: 15px; border: 1px dashed var(--border-color); border-radius: 8px; background: #fff;">
+                    <!-- 预览HTML将注入此处 -->
                 </div>
             </div>
 

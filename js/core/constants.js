@@ -190,7 +190,8 @@ const AI_SUBTAB_PERSONA_CARD = 'persona-card';
 const AI_SUBTAB_WORLDVIEW = 'worldview';
 const AI_SUBTAB_USER_PERSONA = 'user-persona';
 const AI_SUBTAB_OPENING = 'opening';
-const AI_CACHE_TABS = [AI_SUBTAB_PERSONA_CARD, AI_SUBTAB_WORLDVIEW, AI_SUBTAB_USER_PERSONA, AI_SUBTAB_OPENING];
+const AI_SUBTAB_FRONTEND_DECOR = 'frontend-decor';
+const AI_CACHE_TABS = [AI_SUBTAB_PERSONA_CARD, AI_SUBTAB_WORLDVIEW, AI_SUBTAB_USER_PERSONA, AI_SUBTAB_OPENING, AI_SUBTAB_FRONTEND_DECOR];
 
 const AI_PRONOUN_LABELS = {
     first: '第一人称',
@@ -229,6 +230,44 @@ const AI_OPENING_INSTRUCTIONS_DEFAULT = `请直接输出一段可用于故事开
 4. 正文长度尽量贴近用户要求的字数范围；
 5. 只回复开场白正文本身，不要附加解释。`;
 
+const AI_STATUS_INSTRUCTIONS_DEFAULT = `请根据 <status_style>、角色卡与世界书内容，设计一套“适合 char 人设卡使用”的状态栏方案。你的回复必须严格分为以下两段标签内容，除此之外不要输出任何解释、markdown 标题或代码块：
+
+<status_prompt>
+这里写“给角色模型使用的状态栏生成提示词”正文。
+要求：
+1. 这段提示词要指导模型在每次回复末尾追加一个 <status>...</status> 状态栏；
+2. 状态栏风格必须贴合 char 人设卡气质，像角色信息侧写/情境状态卡，而不是冰冷的系统日志；
+3. 状态栏内容至少应覆盖：时间、地点、天气、char 当前状态；并鼓励结合设定补充穿着、姿态、表层情绪、隐秘心绪、与 {{user}} 的关系温度、特殊世界观字段等；
+4. 字段之间统一使用半角竖线 | 分隔；
+5. 提示词里要明确要求模型保持字段顺序稳定、措辞简洁、有画面感，并给出 1 个完整示例；
+6. 这段内容应是可直接复制使用的纯文本提示词。
+</status_prompt>
+
+<status_regex>
+这里必须只放一个 JSON 对象，用于导出前端正则配置，格式尽量参考现有“状态栏”正则文件：
+{
+  "scriptName": "状态栏",
+  "findRegex": "<status>(...)<\\/status>",
+  "replaceString": "...HTML with inline CSS...",
+  "trimStrings": [],
+  "placement": [2],
+  "disabled": false,
+  "markdownOnly": true,
+  "promptOnly": false,
+  "runOnEdit": true,
+  "substituteRegex": 0,
+  "minDepth": null,
+  "maxDepth": null
+}
+要求：
+1. findRegex 必须能准确捕获 <status> 标签中的各字段，并与 replaceString 中的 $1、$2、$3... 一一对应；
+2. replaceString 必须是成套可预览的 HTML + 内联 CSS，整体风格服务于 char 人设卡氛围；
+3. 最外层使用 <details> + <summary> 实现折叠；
+4. 布局请参考状态栏/信息卡类前端美化写法，字段层级清晰，可直接用于 HTML 预览；
+5. JSON 内不要省略关键字段，字符串中的引号、换行和反斜杠都要正确转义，保证 JSON 可被直接解析；
+6. scriptName 默认写“状态栏”。
+</status_regex>`;
+
 window.AppState = window.AppState || {
     supabaseClient: null,
     syncUserId: '',
@@ -246,7 +285,8 @@ window.AppState = window.AppState || {
         [AI_SUBTAB_PERSONA_CARD]: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT,
         [AI_SUBTAB_WORLDVIEW]: AI_WORLDVIEW_INSTRUCTIONS_DEFAULT,
         [AI_SUBTAB_USER_PERSONA]: AI_USER_PERSONA_INSTRUCTIONS_DEFAULT,
-        [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT
+        [AI_SUBTAB_OPENING]: AI_OPENING_INSTRUCTIONS_DEFAULT,
+        [AI_SUBTAB_FRONTEND_DECOR]: AI_STATUS_INSTRUCTIONS_DEFAULT
     },
     selectedModel: '',
     currentAbortController: null,

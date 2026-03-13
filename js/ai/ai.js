@@ -46,7 +46,8 @@ function collectAiUiState() {
         [AI_SUBTAB_PERSONA_CARD]: getVal('aiInstructionsChar', AppState.aiInstructionDrafts?.[AI_SUBTAB_PERSONA_CARD] || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT),
         [AI_SUBTAB_WORLDVIEW]: getVal('aiInstructionsWorld', AppState.aiInstructionDrafts?.[AI_SUBTAB_WORLDVIEW] || AI_WORLDVIEW_INSTRUCTIONS_DEFAULT),
         [AI_SUBTAB_USER_PERSONA]: getVal('aiInstructionsUser', AppState.aiInstructionDrafts?.[AI_SUBTAB_USER_PERSONA] || AI_USER_PERSONA_INSTRUCTIONS_DEFAULT),
-        [AI_SUBTAB_OPENING]: getVal('aiInstructionsOpening', AppState.aiInstructionDrafts?.[AI_SUBTAB_OPENING] || AI_OPENING_INSTRUCTIONS_DEFAULT)
+        [AI_SUBTAB_OPENING]: getVal('aiInstructionsOpening', AppState.aiInstructionDrafts?.[AI_SUBTAB_OPENING] || AI_OPENING_INSTRUCTIONS_DEFAULT),
+        [AI_SUBTAB_FRONTEND_DECOR]: getVal('aiInstructionsStatus', AppState.aiInstructionDrafts?.[AI_SUBTAB_FRONTEND_DECOR] || AI_STATUS_INSTRUCTIONS_DEFAULT)
     };
 
     return {
@@ -152,7 +153,10 @@ function applyAiUiState(state) {
             || AI_USER_PERSONA_INSTRUCTIONS_DEFAULT,
         [AI_SUBTAB_OPENING]: draftsFromState[AI_SUBTAB_OPENING]
             || state.instructionsOpening
-            || AI_OPENING_INSTRUCTIONS_DEFAULT
+            || AI_OPENING_INSTRUCTIONS_DEFAULT,
+        [AI_SUBTAB_FRONTEND_DECOR]: draftsFromState[AI_SUBTAB_FRONTEND_DECOR]
+            || state.instructionsStatus
+            || AI_STATUS_INSTRUCTIONS_DEFAULT
     };
     AppState.aiActiveSubtab = state.activeSubtab || AppState.aiActiveSubtab || AI_SUBTAB_PERSONA_CARD;
 
@@ -165,6 +169,8 @@ function applyAiUiState(state) {
     if (insUserEl) insUserEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_USER_PERSONA] || AI_USER_PERSONA_INSTRUCTIONS_DEFAULT;
     const insOpeningEl = document.getElementById('aiInstructionsOpening');
     if (insOpeningEl) insOpeningEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_OPENING] || AI_OPENING_INSTRUCTIONS_DEFAULT;
+    const insStatusEl = document.getElementById('aiInstructionsStatus');
+    if (insStatusEl) insStatusEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_FRONTEND_DECOR] || AI_STATUS_INSTRUCTIONS_DEFAULT;
 }
 
 function migrateOldAiConfig() {
@@ -399,6 +405,7 @@ function normalizeAiCacheEntry(entry, tabKey = getActiveAiSubtab()) {
     let parsed = null;
     if (tabKey === AI_SUBTAB_PERSONA_CARD) parsed = extractJsonFromText(raw);
     else if (tabKey === AI_SUBTAB_WORLDVIEW) parsed = extractWorldbookFromText(raw);
+    else if (tabKey === AI_SUBTAB_FRONTEND_DECOR) parsed = extractFrontendDecorFromText(raw);
     const modules = Array.isArray(entry.modules) && entry.modules.length
         ? entry.modules
         : inferModulesFromParsedJson(parsed);
@@ -414,7 +421,7 @@ function normalizeAiCacheEntry(entry, tabKey = getActiveAiSubtab()) {
 function parseCachedAiEntry(entry, tabKey) {
     const normalized = normalizeAiCacheEntry(entry, tabKey);
     if (!normalized) return null;
-    if (tabKey === AI_SUBTAB_PERSONA_CARD || tabKey === AI_SUBTAB_WORLDVIEW) return normalized.parsed || null;
+    if (tabKey === AI_SUBTAB_PERSONA_CARD || tabKey === AI_SUBTAB_WORLDVIEW || tabKey === AI_SUBTAB_FRONTEND_DECOR) return normalized.parsed || null;
     return null;
 }
 
@@ -422,6 +429,7 @@ function refreshAiCacheDisplay() {
     const rawSection = document.getElementById('aiRawReplySection');
     const rawContent = document.getElementById('aiRawReplyContent');
     const resultSection = document.getElementById('aiResultSection');
+    const decorResultSection = document.getElementById('aiDecorResultSection');
     const resultContent = document.getElementById('aiRawResult');
     const badges = document.getElementById('aiFillBadges');
     const fillBtn = document.querySelector('.btn-ai-fill');
@@ -437,11 +445,12 @@ function refreshAiCacheDisplay() {
     if (!normalizedCache || !normalizedCache.raw) {
         rawSection.style.display = 'none';
         resultSection.style.display = 'none';
+        if (decorResultSection) decorResultSection.style.display = 'none';
         rawContent.textContent = '等待生成…';
         resultContent.textContent = '';
         badges.innerHTML = '';
         if (generateStatusEl) generateStatusEl.textContent = '';
-        if (fillBtn) fillBtn.style.display = (isOpeningMode() || isUserPersonaMode()) ? 'none' : '';
+        if (fillBtn) fillBtn.style.display = (isOpeningMode() || isUserPersonaMode() || isFrontendDecorMode()) ? 'none' : '';
         return;
     }
 
@@ -449,9 +458,16 @@ function refreshAiCacheDisplay() {
     rawContent.textContent = normalizedCache.raw;
     showAiResult(normalizedCache.raw, normalizedCache.modules || []);
     if (generateStatusEl) {
-        generateStatusEl.textContent = isOpeningMode() ? '已恢复上次生成的开场白缓存' : '已恢复上次 AI 生成缓存';
+        let msg = '已恢复上次 AI 生成缓存';
+        if (isOpeningMode()) msg = '已恢复上次生成的开场白缓存';
+        if (isFrontendDecorMode()) msg = '已恢复上次生成的前端美化缓存';
+        generateStatusEl.textContent = msg;
         generateStatusEl.className = 'ai-status-text success';
     }
+}
+
+function isFrontendDecorMode() {
+    return getActiveAiSubtab() === AI_SUBTAB_FRONTEND_DECOR;
 }
 
 function isOpeningMode() {
@@ -502,7 +518,8 @@ function updateAiInstructionsByActiveTab(force = false) {
         [AI_SUBTAB_PERSONA_CARD]: { id: 'aiInstructionsChar', def: AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT },
         [AI_SUBTAB_WORLDVIEW]: { id: 'aiInstructionsWorld', def: AI_WORLDVIEW_INSTRUCTIONS_DEFAULT },
         [AI_SUBTAB_USER_PERSONA]: { id: 'aiInstructionsUser', def: AI_USER_PERSONA_INSTRUCTIONS_DEFAULT },
-        [AI_SUBTAB_OPENING]: { id: 'aiInstructionsOpening', def: AI_OPENING_INSTRUCTIONS_DEFAULT }
+        [AI_SUBTAB_OPENING]: { id: 'aiInstructionsOpening', def: AI_OPENING_INSTRUCTIONS_DEFAULT },
+        [AI_SUBTAB_FRONTEND_DECOR]: { id: 'aiInstructionsStatus', def: AI_STATUS_INSTRUCTIONS_DEFAULT }
     };
     Object.entries(map).forEach(([tabKey, cfg]) => {
         const el = document.getElementById(cfg.id);
@@ -521,9 +538,10 @@ function syncAiTabUI() {
     const fillBtn = document.querySelector('.btn-ai-fill');
     const isOpening = isOpeningMode();
     const isUserPersona = isUserPersonaMode();
-    if (namingPoolOption) namingPoolOption.style.display = isOpening ? 'none' : '';
+    const isDecor = isFrontendDecorMode();
+    if (namingPoolOption) namingPoolOption.style.display = (isOpening || isDecor) ? 'none' : '';
     if (previewTitle) previewTitle.textContent = '📋 本次将发送的消息预览';
-    if (fillBtn) fillBtn.style.display = (isOpening || isUserPersona) ? 'none' : '';
+    if (fillBtn) fillBtn.style.display = (isOpening || isUserPersona || isDecor) ? 'none' : '';
 }
 
 function buildOpeningPreview() {
@@ -565,6 +583,9 @@ function buildAiMessages() {
     } else if (activeTab === AI_SUBTAB_OPENING) {
         const el = document.getElementById('aiInstructionsOpening');
         instructions = el?.value.trim() || AI_OPENING_INSTRUCTIONS_DEFAULT;
+    } else if (activeTab === AI_SUBTAB_FRONTEND_DECOR) {
+        const el = document.getElementById('aiInstructionsStatus');
+        instructions = el?.value.trim() || AI_STATUS_INSTRUCTIONS_DEFAULT;
     }
 
     const tropeBlock = (sendTrope && trope) ? `<trope>\n${trope}\n</trope>\n\n` : '';
@@ -587,6 +608,11 @@ function buildAiMessages() {
         const charCardBlock = buildCharCardYamlForAi();
         const worldbookBlock = buildWorldbookJsonForAi();
         userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}<about_me>\n${aboutMe}\n</about_me>\n\n<requested_modules>\n${modules.join('、')}\n</requested_modules>\n\n<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<instructiongs_user>\n${instructions}\n</instructiongs_user>`;
+    } else if (isFrontendDecorMode()) {
+        const charCardBlock = buildCharCardYamlForAi();
+        const worldbookBlock = buildWorldbookJsonForAi();
+        const statusStyle = document.getElementById('guide_status_style')?.value.trim() || '';
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}<status_style>\n${statusStyle}\n</status_style>\n\n<instructions_status>\n${instructions}\n</instructions_status>`;
     } else {
         const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
         const guideTexts = modules.map(m => {
@@ -794,7 +820,8 @@ function bindAiSubTabEvents() {
         [AI_SUBTAB_PERSONA_CARD, 'aiInstructionsChar'],
         [AI_SUBTAB_WORLDVIEW, 'aiInstructionsWorld'],
         [AI_SUBTAB_USER_PERSONA, 'aiInstructionsUser'],
-        [AI_SUBTAB_OPENING, 'aiInstructionsOpening']
+        [AI_SUBTAB_OPENING, 'aiInstructionsOpening'],
+        [AI_SUBTAB_FRONTEND_DECOR, 'aiInstructionsStatus']
     ];
     instructionsMap.forEach(([tabKey, elId]) => {
         const el = document.getElementById(elId);
@@ -808,12 +835,12 @@ function bindAiSubTabEvents() {
         });
     });
 
-    ['guide_opening_scene', 'guide_about_me', 'aiOpeningWordCount', 'aiXpCore'].forEach(id => {
+    ['guide_opening_scene', 'guide_about_me', 'guide_status_style', 'aiOpeningWordCount', 'aiXpCore'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', () => {
                 persistAiUiState();
-                if (isOpeningMode() || isUserPersonaMode()) updateModulePreview();
+                if (isOpeningMode() || isUserPersonaMode() || isFrontendDecorMode()) updateModulePreview();
                 updatePromptPreview();
                 scheduleCloudConfigSync();
             });
@@ -963,6 +990,40 @@ function extractWorldbookFromText(rawText) {
     return null;
 }
 
+function extractTagContent(rawText, tagName) {
+    const text = String(rawText || '');
+    if (!text.trim() || !tagName) return '';
+    const regex = new RegExp(`<${tagName}>([\\s\\S]*?)<\\/${tagName}>`, 'i');
+    const match = regex.exec(text);
+    return match ? match[1].trim() : '';
+}
+
+function extractFrontendDecorFromText(rawText) {
+    const statusPrompt = extractTagContent(rawText, 'status_prompt');
+    const statusRegexText = extractTagContent(rawText, 'status_regex');
+    let statusRegexJson = null;
+
+    if (statusRegexText) {
+        try {
+            statusRegexJson = JSON.parse(statusRegexText);
+        } catch (e) {
+            const start = statusRegexText.indexOf('{');
+            const end = statusRegexText.lastIndexOf('}');
+            if (start !== -1 && end > start) {
+                try {
+                    statusRegexJson = JSON.parse(statusRegexText.slice(start, end + 1));
+                } catch (_) {}
+            }
+        }
+    }
+
+    return {
+        statusPrompt,
+        statusRegexText,
+        statusRegexJson
+    };
+}
+
 function copyRawReply() {
     const content = document.getElementById('aiRawReplyContent').textContent;
     navigator.clipboard.writeText(content).then(() => showToast('📋 已复制AI原始回复'));
@@ -999,7 +1060,7 @@ async function generateWithAI() {
     if (!baseUrl) { showToast('请先填写 API 地址'); return; }
     if (!AppState.selectedModel) { showToast('请先获取并选择一个模型'); return; }
     if (!xpCore) { showToast('请填写"这次我想要…"'); return; }
-    if (!isOpeningMode() && modules.length === 0) { showToast('请至少勾选一个生成模块'); return; }
+    if (!isOpeningMode() && !isFrontendDecorMode() && modules.length === 0) { showToast('请至少勾选一个生成模块'); return; }
     if (isOpeningMode() && !openingScene) { showToast('请填写开场白需求描述'); return; }
     if (isUserPersonaMode() && !aboutMe) { showToast('请先填写 <about_me>，简单描述你想要的 user'); return; }
 
@@ -1241,6 +1302,12 @@ function processAiResult(raw, modules) {
         setAiStatus('✅ user 人设生成成功！', 'success');
         return;
     }
+    if (isFrontendDecorMode()) {
+        AppState.aiLastJson = extractFrontendDecorFromText(raw);
+        showAiResult(raw, modules);
+        setAiStatus('✅ 前端美化生成成功！', 'success');
+        return;
+    }
     if (tabKey === AI_SUBTAB_WORLDVIEW) AppState.aiLastJson = extractWorldbookFromText(raw);
     else AppState.aiLastJson = extractJsonFromText(raw);
     if (AppState.aiLastJson) {
@@ -1261,6 +1328,18 @@ function setAiStatus(text, cls) {
 
 function showAiResult(raw, modules) {
     const section = document.getElementById('aiResultSection');
+    const decorSection = document.getElementById('aiDecorResultSection');
+    
+    if (isFrontendDecorMode()) {
+        section.style.display = 'none';
+        if (decorSection) {
+            decorSection.style.display = '';
+            renderDecorPreview();
+        }
+        return;
+    }
+
+    if (decorSection) decorSection.style.display = 'none';
     section.style.display = '';
     const badges = document.getElementById('aiFillBadges');
     badges.innerHTML = (modules || []).length
@@ -1269,6 +1348,105 @@ function showAiResult(raw, modules) {
     document.getElementById('aiRawResult').textContent = raw;
     const shouldHideResult = !isOpeningMode() && !(modules || []).length && !AppState.aiLastJson && !String(raw || '').trim();
     if (shouldHideResult) section.style.display = 'none';
+}
+
+function renderDecorPreview() {
+    const container = document.getElementById('decorPreviewArea');
+    const promptContainer = document.getElementById('decorPromptPreviewArea');
+    const regexContainer = document.getElementById('decorRegexPreviewArea');
+    if (!container) return;
+    const data = AppState.aiLastJson;
+    const promptText = data?.statusPrompt || '';
+    const regexJson = data?.statusRegexJson || null;
+    const regexText = data?.statusRegexText || '';
+
+    if (promptContainer) {
+        promptContainer.textContent = promptText || '暂无可用的 <status_prompt> 内容。';
+    }
+    if (regexContainer) {
+        regexContainer.textContent = regexJson
+            ? JSON.stringify(regexJson, null, 2)
+            : (regexText || '暂无可用的 <status_regex> 内容。');
+    }
+
+    if (!regexJson || !regexJson.replaceString) {
+        container.innerHTML = '<div style="color:var(--text-sub); text-align:center;">暂无有效的 HTML 预览内容，请检查 AI 回复中的 <status_regex> JSON 是否完整。</div>';
+        return;
+    }
+    
+    let html = regexJson.replaceString;
+    // Remove group references like $1, $2 with empty strings for preview
+    html = html.replace(/\$\d+/g, '');
+    container.innerHTML = html;
+}
+
+function copyDecorPrompt() {
+    const data = AppState.aiLastJson;
+    if (!data || !data.statusPrompt) {
+        showToast('⚠️ 未找到提取的状态栏提示词');
+        return;
+    }
+    navigator.clipboard.writeText(data.statusPrompt).then(() => showToast('📋 已复制状态栏提示词'));
+}
+
+function importDecorPromptToWorldStatusbar() {
+    const data = AppState.aiLastJson;
+    const promptText = String(data?.statusPrompt || '').trim();
+    if (!promptText) {
+        showToast('⚠️ 未找到可导入的 <status_prompt> 内容');
+        return;
+    }
+
+    const target = document.getElementById('world_statusbar');
+    if (!target) {
+        showToast('⚠️ 未找到世界书中的“状态栏”输入框');
+        return;
+    }
+
+    const existing = String(target.value || '').trim();
+    if (existing && existing !== promptText) {
+        const shouldReplace = confirm('世界书 → 状态栏 已有内容，是否用当前 AI 提取的状态栏提示词覆盖？');
+        if (!shouldReplace) return;
+    }
+
+    target.value = promptText;
+
+    // 自动切换到“世界书”页，方便用户立即检查
+    document.querySelectorAll('.top-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.top-tab-content').forEach(panel => panel.classList.remove('active'));
+    const worldTabBtn = document.querySelector('.top-tab-btn[data-tab="world-book"]');
+    const worldTabPanel = document.getElementById('tab-world-book');
+    if (worldTabBtn) worldTabBtn.classList.add('active');
+    if (worldTabPanel) worldTabPanel.classList.add('active');
+
+    target.focus();
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+    if (typeof triggerAutoSave === 'function') triggerAutoSave();
+
+    showToast('📥 已导入到世界书 → 状态栏');
+}
+
+function downloadDecorJson() {
+    const data = AppState.aiLastJson;
+    const regexJson = data?.statusRegexJson;
+    if (!regexJson) {
+        showToast('⚠️ 无可用数据');
+        return;
+    }
+    const exportData = {
+        ...regexJson,
+        scriptName: regexJson.scriptName || '状态栏'
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `regex-状态栏.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('📥 正在下载正则文件');
 }
 
 // 将 AI 解析后的结果填回表单
